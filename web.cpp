@@ -2,11 +2,13 @@
 #define UIT_SUPPRESS_MACRO_INSEEP_WARNINGS
 
 #include "emp/math/Random.hpp"
+#include "emp/math/math.hpp"
 #include "emp/web/Animate.hpp"
 #include "emp/web/Document.hpp"
 #include "emp/web/web.hpp"
 #include "World.h"
 #include "Org.h"
+#include "Cell.h"
 #include "ConfigSetup.h"
 #include "emp/config/ArgManager.hpp"
 #include "emp/prefab/ConfigPanel.hpp"
@@ -19,7 +21,8 @@ emp::web::Document tasksDoc("tasks");
 // Your configuration object needs to exist outside of the animator class
 MyConfigType worldConfig;
 
-struct Stats {
+struct Stats
+{
     int count;
     double min;
     double max;
@@ -27,7 +30,8 @@ struct Stats {
     double variance;
 };
 
-class AEAnimator : public emp::web::Animate {
+class AEAnimator : public emp::web::Animate
+{
 
     // arena width and height
     const int num_h_boxes = worldConfig.WORLD_LEN();
@@ -35,6 +39,20 @@ class AEAnimator : public emp::web::Animate {
     const double RECT_SIDE = worldConfig.CELL_SIZE();
     const double width{num_w_boxes * RECT_SIDE};
     const double height{num_h_boxes * RECT_SIDE};
+    std::vector<std::vector<Cell *>> cell_grid = std::vector<std::vector<Cell *>>(
+        num_w_boxes, std::vector<Cell *>(num_h_boxes));
+    // direction‐vectors for 8 neighbors:
+    //    0: N   ( 0,-1)
+    //    1: NE  ( 1,-1)
+    //    2: E   ( 1, 0)
+    //    3: SE  ( 1, 1)
+    //    4: S   ( 0, 1)
+    //    5: SW  (-1, 1)
+    //    6: W   (-1, 0)
+    //    7: NW  (-1,-1)
+    static constexpr int dx[8] = {0, 1, 1, 1, 0, -1, -1, -1};
+    static constexpr int dy[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
+
     emp::Random random{worldConfig.SEED()};
     OrgWorld world{random};
 
@@ -42,20 +60,24 @@ class AEAnimator : public emp::web::Animate {
 
 public:
     // Constructor
-    AEAnimator() {
+    AEAnimator()
+    {
         SetupCanvas();
         SetupConfigPanel();
         SetupWorld();
+        SetupCellGrid();
+        LinkAllNeighbors();
     }
 
     /**
      * Input: None
-     * 
+     *
      * Output: None
-     * 
+     *
      * Purpose: Setup the canvas and add it to the document.
      */
-    void SetupCanvas() {
+    void SetupCanvas()
+    {
         // shove canvas into the div
         // along with a control button
         doc << canvas;
@@ -70,7 +92,8 @@ public:
      *
      * Purpose: Setup the config panel and add it to the document.
      */
-    void SetupConfigPanel() {
+    void SetupConfigPanel()
+    {
         // setup configuration panel
         emp::prefab::ConfigPanel config_panel(worldConfig);
         for (auto &name : {
@@ -105,15 +128,51 @@ public:
      *
      * Purpose: Setup the world and the initial organisms, then add it to the document.
      */
-    void SetupWorld() {
+    void SetupWorld()
+    {
         // setup the world
         world.SetPopStruct_Grid(num_w_boxes, num_h_boxes);
         world.Resize(num_h_boxes, num_w_boxes);
-        for (int i = 0; i < worldConfig.START_NUM(); i++) {
+        for (int i = 0; i < worldConfig.START_NUM(); i++)
+        {
             Organism *new_org = new Organism(&world);
             world.Inject(*new_org);
         }
     }
+
+    /**
+     * Input: None
+     *
+     * Output: None
+     *
+     * Purpose: Setup the cell grid, iterate through them and set linear index equivalent to how organism indices are set.
+     */
+    void SetupCellGrid()
+    {
+        int org_num = 0;
+        for (int x = 0; x < num_w_boxes; x++)
+        {
+            for (int y = 0; y < num_h_boxes; y++)
+            {
+                cell_grid[x][y]->SetIndex(org_num);
+                org_num++;
+            }
+        }
+    }
+
+   void LinkAllNeighbors() {
+    for (int x = 0; x < num_w_boxes; ++x) {
+      for (int y = 0; y < num_h_boxes; ++y) {
+        Cell * C = cell_grid[x][y];
+        // Fill its 8‐entry connections[] vector:
+        for (int dir = 0; dir < 8; ++dir) {
+          int nx = emp::Mod(x + dx[dir], num_w_boxes);
+          int ny = emp::Mod(y + dy[dir], num_h_boxes);
+          C->SetConnection(dir, cell_grid[nx][ny]);
+        }
+      }
+    }
+  }
 
     /**
      * Input: None
@@ -130,7 +189,8 @@ public:
         double sum = 0.0, sum_sq = 0.0;
         s.count = 0;
 
-        for (int i = 0; i < world.GetSize(); ++i) {
+        for (int i = 0; i < world.GetSize(); ++i)
+        {
             if (!world.IsOccupied(i))
                 continue;
             double p = world.GetOrg(i).GetPoints();
@@ -140,7 +200,8 @@ public:
             sum_sq += p * p;
             ++s.count;
         }
-        if (s.count == 0) {
+        if (s.count == 0)
+        {
             s.min = 0.0;
             s.max = 0.0;
         }
@@ -171,30 +232,31 @@ public:
 
     /**
      * Input: None
-     * 
+     *
      * Output: None
-     * 
+     *
      * Purpose: Render a legend of task‐colors and the per‐tick solves
      */
-    void RecordTaskPanel() {
+    void RecordTaskPanel()
+    {
         tasksDoc.Clear();
         tasksDoc << "<div id='tasks-content'>";
         auto tasks = world.GetTasks();
-        auto mons  = world.GetSolveMonitors();
-      
-        for (size_t i = 0; i < tasks.size(); ++i) {
-          std::string swatch_color = emp::ColorHSV(TaskHue(i), 1.0, 1.0);
-          int solves = mons[i]->GetTotal();
-          tasksDoc << "<div class='task-entry'>"
-                   <<   "<span class='task-swatch' style='background:" << swatch_color << "'></span>"
-                   <<   tasks[i]->name()
-                   <<   " — Solves: " << solves
-                   << "</div>";
+        auto mons = world.GetSolveMonitors();
+
+        for (size_t i = 0; i < tasks.size(); ++i)
+        {
+            std::string swatch_color = emp::ColorHSV(TaskHue(i), 1.0, 1.0);
+            int solves = mons[i]->GetTotal();
+            tasksDoc << "<div class='task-entry'>"
+                     << "<span class='task-swatch' style='background:" << swatch_color << "'></span>"
+                     << tasks[i]->name()
+                     << " — Solves: " << solves
+                     << "</div>";
         }
-      
+
         tasksDoc << "</div>";
-      }
-      
+    }
 
     /**
      * Input: A task id
@@ -203,9 +265,10 @@ public:
      *
      * Purpose: Calculate the hue of the task based on its id and the global number of tasks.
      */
-    double TaskHue(size_t task_id) {
+    double TaskHue(size_t task_id)
+    {
         size_t N = world.GetTasks().size();
-        return 360.0 * double(task_id) / (N+1);
+        return 360.0 * double(task_id) / (N + 1);
     }
 
     /**
@@ -215,7 +278,8 @@ public:
      *
      * Purpose: Calculate the brightness of the organism based on its points relative to the max point in the world.
      */
-    double PtsBrightness(double pts, double max_pts) {
+    double PtsBrightness(double pts, double max_pts)
+    {
         double minB = worldConfig.MIN_BRIGHT();
         double maxB = worldConfig.MAX_BRIGHT();
         double ratio_pts = (max_pts > 0)
@@ -232,7 +296,8 @@ public:
      *
      * Purpose: Calculate the color of the organism based on its best task done and points.
      */
-    std::string OrgColor(Organism &org, float max_pts) {
+    std::string OrgColor(Organism &org, float max_pts)
+    {
         // basic stats
         double pts = org.GetPoints();
         size_t best = org.GetBestTask();
@@ -259,13 +324,17 @@ public:
         RecordTaskPanel();
 
         int org_num = 0;
-        for (int x = 0; x < num_w_boxes; x++) {
-            for (int y = 0; y < num_h_boxes; y++){
-                if (!world.IsOccupied(org_num)) {
+        for (int x = 0; x < num_w_boxes; x++)
+        {
+            for (int y = 0; y < num_h_boxes; y++)
+            {
+                if (!world.IsOccupied(org_num))
+                {
                     canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE,
                                 "white", "black");
                 }
-                else {
+                else
+                {
                     auto &org = world.GetOrg(org_num);
                     const std::string fill = OrgColor(org, st.max);
                     canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE,

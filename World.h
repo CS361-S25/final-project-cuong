@@ -6,6 +6,7 @@
 #include <vector>
 #include "Org.h"
 #include "Task.h"
+#include "Cell.h"
 #include "ConfigSetup.h"
 
 class OrgWorld : public emp::World<Organism>
@@ -48,9 +49,9 @@ public:
   /**
    * Input: None
    *
-   * Output: The size of the world
+   * Output: Returns various local variables.
    *
-   * Purposes: Returns various local variables.
+   * Purposes: To be called from other files
    */
   const pop_t &GetPopulation() { return pop; }
   auto GetTasks() { return tasks; }

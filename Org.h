@@ -1,6 +1,7 @@
 #ifndef ORG_H
 #define ORG_H
 
+#include <string>
 #include "CPU.h"
 #include "OrgState.h"
 #include "emp/Evolve/World_structure.hpp"
@@ -9,6 +10,8 @@
 class Organism {
   CPU cpu;
   const MyConfigType& config;
+  std::string message;
+  std::string inbox;
 
 public:
 
@@ -20,8 +23,8 @@ public:
   void SetPoints(double _in) { cpu.state.points = _in; }
   void AddPoints(double _in) { cpu.state.points += _in; }
   double GetPoints() { return cpu.state.points; }
-  size_t GetAge() { return cpu.state.age; }
-  size_t GetBestTask() { return cpu.state.best_task; }
+  // size_t GetAge() { return cpu.state.age; }
+  // size_t GetBestTask() { return cpu.state.best_task; }
   void Reset() { cpu.Reset(); }
   void Mutate() { cpu.Mutate(); }
 
