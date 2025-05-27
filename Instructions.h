@@ -2,6 +2,7 @@
 #define INSTRUCTIONS_H
 
 #include "OrgState.h"
+#include "emp/math/math.hpp"
 #include "sgpl/library/OpLibraryCoupler.hpp"
 #include "sgpl/library/prefab/ArithmeticOpLibrary.hpp"
 #include "sgpl/library/prefab/NopOpLibrary.hpp"
@@ -9,18 +10,21 @@
 #include "sgpl/program/Instruction.hpp"
 #include "sgpl/program/Program.hpp"
 #include "sgpl/spec/Spec.hpp"
-//#include <_types/_uint32_t.h>
+#include <string>
+// #include <_types/_uint32_t.h>
 
 /**
  * A custom instruction that outputs the value of a register as the (possible)
  * solution to a task, and then gets a new input value and stores it in the same
  * register.
  */
-struct IOInstruction {
+struct IOInstruction
+{
   template <typename Spec>
   static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
-                  typename Spec::peripheral_t &state) noexcept {
+                  typename Spec::peripheral_t &state) noexcept
+  {
     uint32_t output = core.registers[inst.args[0]];
     state.world->CheckOutput(output, state);
 
@@ -33,17 +37,19 @@ struct IOInstruction {
   static size_t prevalence() { return 1; }
 };
 
-struct NandInstruction {
+struct NandInstruction
+{
   template <typename Spec>
   static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
-                  typename Spec::peripheral_t &state) noexcept {
-                    uint32_t reg_b = core.registers[inst.args[1]];
-                    uint32_t reg_c = core.registers[inst.args[2]];
-                    uint32_t nand_val = ~(reg_b & reg_c);
+                  typename Spec::peripheral_t &state) noexcept
+  {
+    uint32_t reg_b = core.registers[inst.args[1]];
+    uint32_t reg_c = core.registers[inst.args[2]];
+    uint32_t nand_val = ~(reg_b & reg_c);
 
-                    core.registers[inst.args[0]] = nand_val;
-                  }
+    core.registers[inst.args[0]] = nand_val;
+  }
   static std::string name() { return "Nand"; }
   static size_t prevalence() { return 1; }
 };
@@ -52,27 +58,143 @@ struct NandInstruction {
  * A custom instruction that attempts to reproduce and produce a child organism,
  * if this organism has enough points.
  */
-struct ReproduceInstruction {
+struct ReproduceInstruction
+{
   template <typename Spec>
   static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
-                  typename Spec::peripheral_t &state) noexcept {
-    if (state.points > 20) {
+                  typename Spec::peripheral_t &state) noexcept
+  {
+    if (state.points > 20)
+    {
       state.world->ReproduceOrg(state.current_location);
       state.points = 0;
     }
-    
   }
 
   static std::string name() { return "Reproduce"; }
   static size_t prevalence() { return 1; }
 };
 
+struct GetFacing { 
+    template <typename Spec>
+    static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
+                  const sgpl::Program<Spec> &,
+                  typename Spec::peripheral_t &state) noexcept {
+        core.registers[inst.args[0]] = state.cell->GetFacing();
+    }
+
+    static std::string name() { return "GetFacing"; } 
+    static size_t prevalence() { return 1; }
+};
+
+struct RotateLeft { 
+    template <typename Spec>
+    static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
+                  const sgpl::Program<Spec> &,
+                  typename Spec::peripheral_t &state) noexcept {
+        state.cell->RotateLeft();
+    }
+
+    static std::string name() { return "RotateLeft"; } 
+    static size_t prevalence() { return 1; }
+};
+
+struct RotateRight { 
+    template <typename Spec>
+    static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
+                  const sgpl::Program<Spec> &,
+                  typename Spec::peripheral_t &state) noexcept {
+        state.cell->RotateRight();
+    }
+
+    static std::string name() { return "RotateRight"; } 
+    static size_t prevalence() { return 1; }
+};
+
+struct GetID { 
+    template <typename Spec>
+    static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
+                  const sgpl::Program<Spec> &,
+                  typename Spec::peripheral_t &state) noexcept {
+        core.registers[inst.args[0]] = std::stoi(state.cell->GetID());
+    }
+
+    static std::string name() { return "GetID"; } 
+    static size_t prevalence() { return 1; }
+};
+
+struct SendMessage { 
+    template <typename Spec>
+    static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
+                  const sgpl::Program<Spec> &,
+                  typename Spec::peripheral_t &state) noexcept {
+        emp::WorldPosition loc = state.current_location;
+        int dir = emp::Mod(static_cast<int>(core.registers[inst.args[1]]) , 8);
+        std::string message = std::to_string(core.registers[inst.args[0]]);
+        state.world->SendMessage(loc, dir, message);
+    }
+
+    static std::string name() { return "SendMessage"; } 
+    static size_t prevalence() { return 1; }
+};
+
+struct RetrieveMessage { 
+    template <typename Spec>
+    static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
+                  const sgpl::Program<Spec> &,
+                  typename Spec::peripheral_t &state) noexcept {
+        state.message = state.inbox;
+    }
+
+    static std::string name() { return "RetrieveMessage"; } 
+    static size_t prevalence() { return 1; }
+};
 
 
 using Library =
-    sgpl::OpLibraryCoupler<sgpl::NopOpLibrary, sgpl::BitwiseShift, sgpl::Increment, sgpl::Decrement,
-    sgpl::Add, sgpl::Subtract, sgpl::global::JumpIfNot, sgpl::local::JumpIfNot, sgpl::global::Anchor, IOInstruction, NandInstruction,
+    sgpl::OpLibraryCoupler<sgpl::NopOpLibrary, 
+                           sgpl::TerminateIf,
+                           sgpl::Add,
+                           sgpl::Divide,
+                           sgpl::Modulo,
+                           sgpl::Multiply,
+                           sgpl::Subtract,
+                           sgpl::BitwiseAnd,
+                           sgpl::BitwiseNot,
+                           sgpl::BitwiseOr,
+                           sgpl::BitwiseShift,
+                           sgpl::BitwiseXor,
+                           sgpl::CountOnes,
+                           sgpl::RandomFill,
+                           sgpl::Equal,
+                           sgpl::GreaterThan,
+                           sgpl::LessThan,
+                           sgpl::LogicalAnd,
+                           sgpl::LogicalOr,
+                           sgpl::NotEqual,
+                           sgpl::global::Anchor,
+                           sgpl::global::JumpIf,
+                           sgpl::global::JumpIfNot,
+                           sgpl::global::RegulatorAdj<>,
+                           sgpl::global::RegulatorDecay<>,
+                           sgpl::global::RegulatorGet<>,
+                           sgpl::global::RegulatorSet<>,
+                           sgpl::local::Anchor,
+                           sgpl::local::JumpIf,
+                           sgpl::local::JumpIfNot,
+                           sgpl::local::RegulatorAdj,
+                           sgpl::local::RegulatorDecay,
+                           sgpl::local::RegulatorGet,
+                           sgpl::local::RegulatorSet,
+                           sgpl::Decrement,
+                           sgpl::Increment,
+                           sgpl::Negate,
+                           sgpl::Not,
+                           sgpl::RandomBool,
+                           sgpl::RandomDraw,
+                           sgpl::Terminal, 
+                           IOInstruction, NandInstruction,
                            ReproduceInstruction>;
 
 using Spec = sgpl::Spec<Library, OrgState>;

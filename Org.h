@@ -1,17 +1,16 @@
 #ifndef ORG_H
 #define ORG_H
 
-#include <string>
+
 #include "CPU.h"
 #include "OrgState.h"
+#include "Cell.h"
 #include "emp/Evolve/World_structure.hpp"
 #include "ConfigSetup.h"
 
 class Organism {
   CPU cpu;
   const MyConfigType& config;
-  std::string message;
-  std::string inbox;
 
 public:
 
@@ -25,6 +24,20 @@ public:
   double GetPoints() { return cpu.state.points; }
   // size_t GetAge() { return cpu.state.age; }
   // size_t GetBestTask() { return cpu.state.best_task; }
+
+  emp::WorldPosition GetLocation(){return cpu.state.current_location;}
+ 
+  void SetCell(Cell* new_cell) {cpu.state.cell = new_cell;}
+  Cell* GetCell() {return cpu.state.cell;}
+
+  void SetFacing(int new_facing) {cpu.state.facing = new_facing;}
+  
+  void SetMessage(std::string new_message) {cpu.state.message = new_message;}
+  std::string GetMessage() {return cpu.state.message;}
+  
+  void SetInbox(std::string new_inbox) {cpu.state.inbox = new_inbox;}
+  std::string GetInbox() {return cpu.state.inbox;}
+  
   void Reset() { cpu.Reset(); }
   void Mutate() { cpu.Mutate(); }
 

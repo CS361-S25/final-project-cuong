@@ -2,7 +2,9 @@
 #define ORGSTATE_H
 
 #include "emp/Evolve/World_structure.hpp"
+#include "Cell.h"
 #include <cstddef>
+#include <string>
 
 // This forward declaration is necessary since the world contains organisms,
 // which contain cpus, which contain the state, so if the state could actually
@@ -26,6 +28,14 @@ struct OrgState {
   bool task_done = false;
   //Needs to know current location for possible reproduction
   emp::WorldPosition current_location;
+  //Current cell the organism is located in
+  Cell* cell;
+  // Current facing direction of the cell (0-N to 7-NW)
+  int facing;
+  // The message inbox
+  std::string inbox;
+  // The message the organism has retrieved
+  std::string message;
 
   /**
   * Adds an input number to the tracker

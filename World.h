@@ -237,6 +237,14 @@ public:
     // organism
     reproduce_queue.push_back(location);
   }
+
+  void SendMessage(int location, int dir, std::string message) {
+    Organism* sender = pop[location];
+    int receiver_index = sender->GetCell()->GetConnection(dir)->GetIndex();
+    if (IsOccupied(receiver_index)) {
+      pop[receiver_index]->SetInbox(message);
+    }
+  }
 };
 
 #endif
