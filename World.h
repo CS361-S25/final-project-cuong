@@ -16,6 +16,19 @@ class OrgWorld : public emp::World<Organism>
   std::vector<emp::Ptr<emp::DataMonitor<int>>> solve_monitors;
   std::vector<int> solve_counts;
 
+  std::vector<Cell *> cell_grid = std::vector<Cell *>(GetSize());
+    // direction‐vectors for 8 neighbors:
+    //    0: N   ( 0,-1)
+    //    1: NE  ( 1,-1)
+    //    2: E   ( 1, 0)
+    //    3: SE  ( 1, 1)
+    //    4: S   ( 0, 1)
+    //    5: SW  (-1, 1)
+    //    6: W   (-1, 0)
+    //    7: NW  (-1,-1)
+    static constexpr int dx[8] = {0, 1, 1, 1, 0, -1, -1, -1};
+    static constexpr int dy[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
+
 public:
 
  /**
@@ -27,14 +40,8 @@ public:
   */
   OrgWorld(emp::Random &_random) : emp::World<Organism>(_random) {
     AddTask(new Initial());
-    AddTask(new ComputeEqual());
-    AddTask(new ComputeIncrement());
-    // AddTask(new ComputeDecrement());
-    AddTask(new ComputeDouble());
-    // AddTask(new ComputeHalf());
-    AddTask(new ComputeSquare());
-    // AddTask(new ComputeSquareRoot());
-    AddTask(new ComputeLog());
+    AddTask(new SendHighest());
+    SetupCellGrid();
   }
 
   /**
@@ -56,6 +63,17 @@ public:
   const pop_t &GetPopulation() { return pop; }
   auto GetTasks() { return tasks; }
   auto GetSolveMonitors() { return solve_monitors; }
+  // Cell * GetCellByLinearIndex(int idx) const {
+  //   const int W = GetWidth();   // == num_w_boxes
+  //   const int H = GetHeight();  // == num_h_boxes
+  //   const int total = W * H;
+  //   if (idx < 0 || idx >= total) return nullptr;
+
+  //   // linear index = x*H + y
+  //   const int x = idx / H;
+  //   const int y = idx % H;
+  //   return cell_grid[x][y];
+  // }
 
   /**
    * Input: A task pointer
@@ -115,6 +133,37 @@ public:
   }
 
   /**
+     * Input: None
+     *
+     * Output: None
+     *
+     * Purpose: Setup the cell grid, iterate through them and set linear index equivalent to how organism indices are set.
+     */
+    void SetupCellGrid()
+    {
+        for (int i = 0; i < GetSize(); i++)
+        {
+            Cell* new_cell = new Cell();
+            new_cell->SetIndex(i);
+            cell_grid[i] = new_cell;
+        }
+    }
+
+   void LinkAllNeighbors(int w, int h) {
+    for (int x = 0; x < w; ++x) {
+      for (int y = 0; y < h; ++y) {
+        Cell * C = cell_grid[x*h+y];
+        // Fill its 8‐entry connections[] vector:
+        for (int dir = 0; dir < 8; ++dir) {
+          int nx = emp::Mod(x + dx[dir], w);
+          int ny = emp::Mod(y + dy[dir], h);
+          C->SetConnection(dir, cell_grid[nx*h+ny]);
+        }
+      }
+    }
+  }
+  
+  /**
    * Input: index of a known organism.
    *
    * Output: the organism at the index
@@ -124,6 +173,7 @@ public:
   emp::Ptr<Organism> ExtractOrganism(int i) {
     emp::Ptr<Organism> org = pop[i];
     pop[i] = nullptr;
+    org->SetCell(nullptr);
     return org;
   }
 
@@ -189,6 +239,14 @@ public:
     }
     reproduce_queue.clear();
   }
+
+  void BindAllOrganismsToCell(){
+    for(int i = 0; i < GetSize(); i++){
+      if (!IsOccupied(i))
+        continue;
+      pop[i]->SetCell(cell_grid[i]);
+    }
+  }
   
 
   /**
@@ -205,7 +263,7 @@ public:
     this->ProcessAllOrganisms();
     this->MoveAllOrganisms();
     this->ReproduceAllValidOrganisms();
-    
+    this->BindAllOrganismsToCell();
   }
     
   /**
@@ -215,13 +273,13 @@ public:
    *
    * Purpose: Make all organisms that can reproduce, do so at a random order.
    */
-  void CheckOutput(float output, OrgState &state) {
+  void CheckOutput(OrgState &state) {
     // TODO: Check if the organism solved a task!
 
     for (size_t i = 0; i < tasks.size(); ++i) {
-      double pts = tasks[i]->CheckOutput(output, state.last_inputs);
+      double pts = tasks[i]->CheckOutput(state);
       if (pts > 0.0) {
-        std::cout << "Solved: " << tasks[i]->name()
+        std::cout << "Completed: " << tasks[i]->name()
         << " (+ " << pts << " points)\n";
         state.points += pts;
         RecordSolve(i);

@@ -4,7 +4,9 @@
 // #include <_types/_uint32_t.h>
 #include <cmath>
 #include <string>
+#include <algorithm>
 #include <iostream>
+#include "OrgState.h"
 
 /**
  * The interface for a task that organisms can complete.
@@ -20,119 +22,45 @@ class Task {
      * 
      * Purpose: Checks if the output is correct for any input.
     */
-    double CheckOutput(float output, uint32_t inputs[4]) {
-      static emp::Random rng{ worldConfig.SEED() };
-      emp::vector<size_t> check_schedule = emp::GetPermutation(rng, 4);
-      for (size_t i : check_schedule) {
-        double pts = CheckOne(output, inputs[i]);
-        if (pts > 0.0) return pts;
-      }
+    virtual double CheckOutput(OrgState &state) {
       return 0.0;
     }
   
     /// Human-readable name
     virtual std::string name() const = 0;
   
-  protected:
-    /**
-     * Input: An output value and an input the organism received.
-     * 
-     * Output: The number of points for (if any) the task was completed.
-     * 
-     * Purpose: Be overwritten in subclasses and checks if the output is correct for any input.
-    */
-    virtual double CheckOne(float output, uint32_t input) = 0;
   };
 
 // Task: Nothing. This is just for the purpose of categorizing the organisms
 class Initial : public Task {
-  protected:
-    double CheckOne(float output, uint32_t input) override {
+  public:
+    double CheckOutput(OrgState &state) override {
       return 0.0;
     }
-  public:
+
     std::string name() const override { return "Initial"; }
   };
 
-// Task: returns a value equal to the input
-class ComputeEqual : public Task {
-protected:
-  double CheckOne(float output, uint32_t input) override {
-    return (std::fabs(output - input) < 0.001) ? 1.0 : 0.0;
-  }
+// Task: returns the highest value between received cell ID and org's cell's cell ID
+class SendHighest : public Task {
 public:
-  std::string name() const override { return "Compute Equal"; }
-};
+  double CheckOutput(OrgState &state) override {
+    std::string sent = state.message;
+    int cell_id  = std::stoi( state.cell->GetID() );
+    int received = std::stoi( state.inbox );
 
-// Task: returns a value one more than the input
-class ComputeIncrement : public Task {
-  protected:
-  double CheckOne(float output, uint32_t input) override {
-    return (std::fabs(output - (input+1)) < 0.001) ? 2.0 : 0.0;
-  }
-public:
-  std::string name() const override { return "Compute Increment"; }
-};
+    int max_val = std::max(cell_id, received);
+    std::string max_str = std::to_string(max_val);
 
-// Task: returns a value less than the input
-class ComputeDecrement : public Task {
-  protected:
-  double CheckOne(float output, uint32_t input) override {
-    return (std::fabs(output - (input-1)) < 0.001) ? 2.0 : 0.0;
-  }
-public:
-  std::string name() const override { return "Compute Decrement"; }
-};
-
-// Task: returns a value double the input
-class ComputeDouble : public Task {
-  protected:
-  double CheckOne(float output, uint32_t input) override {
-    return (std::fabs(output - input*2) < 0.001) ? 100.0 : 0.0;
-  }
-public:
-  std::string name() const override { return "Compute Double"; }
-};
-
-// Task: returns a value half the input
-class ComputeHalf : public Task {
-  protected:
-  double CheckOne(float output, uint32_t input) override {
-    return (std::fabs(output - input/2) < 0.001) ? 50.0 : 0.0;
-  }
-public:
-  std::string name() const override { return "Compute Half"; }
-};
-
-// Task: returns a value equal to the input squared
-class ComputeSquare : public Task {
-  protected:
-    double CheckOne(float output, uint32_t input) override {
-      return (std::fabs(output - input*input) < 0.001) ? 1000.0 : 0.0;
+    if ( sent.find(max_str) != std::string::npos ) {
+      return 10.0;
     }
-  public:
-    std::string name() const override { return "Compute Square"; }
-};
-
-// Task: returns a value equal to the input square root
-class ComputeSquareRoot : public Task {
-  protected:
-    double CheckOne(float output, uint32_t input) override {
-      return (std::fabs(output - std::sqrt(input)) < 0.001) ? 1000.0 : 00;
+    else {
+      return 0.0;
     }
-  public:
-    std::string name() const override { return "Compute Square Root"; }
-};
-
-
-// Task: returns a value equal to the natural log of the input
-class ComputeLog : public Task {
-  protected:
-  double CheckOne(float output, uint32_t input) override {
-    return (std::fabs(output - std::log(input)) < 0.001) ? 10000.0 : 0.0;
   }
-public:
-  std::string name() const override { return "Compute Log"; }
+  std::string name() const override { return "Send Highest"; }
 };
+
 
 #endif

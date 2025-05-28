@@ -25,8 +25,8 @@ struct IOInstruction
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept
   {
-    uint32_t output = core.registers[inst.args[0]];
-    state.world->CheckOutput(output, state);
+    // uint32_t output = core.registers[inst.args[0]];
+    state.world->CheckOutput(state);
 
     uint32_t input = sgpl::tlrand.Get().GetUInt();
     core.registers[inst.args[0]] = input;
@@ -132,6 +132,7 @@ struct SendMessage {
         emp::WorldPosition loc = state.current_location;
         int dir = emp::Mod(static_cast<int>(core.registers[inst.args[1]]) , 8);
         std::string message = std::to_string(core.registers[inst.args[0]]);
+        state.message = message;
         state.world->SendMessage(loc, dir, message);
     }
 
@@ -144,7 +145,8 @@ struct RetrieveMessage {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
-        state.message = state.inbox;
+        state.retrieved = state.inbox;
+        core.registers[inst.args[0]] = std::stoi(state.inbox);
     }
 
     static std::string name() { return "RetrieveMessage"; } 

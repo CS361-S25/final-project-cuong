@@ -60,6 +60,7 @@ public:
    */
   void Process(emp::WorldPosition current_location) {
     //cpu.state.task_done = false;
+    AddPoints(1.0);
     cpu.state.current_location = current_location;
     cpu.RunCPUStep(10);
     cpu.state.age++;

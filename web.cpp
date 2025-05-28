@@ -39,19 +39,7 @@ class AEAnimator : public emp::web::Animate
     const double RECT_SIDE = worldConfig.CELL_SIZE();
     const double width{num_w_boxes * RECT_SIDE};
     const double height{num_h_boxes * RECT_SIDE};
-    std::vector<std::vector<Cell *>> cell_grid = std::vector<std::vector<Cell *>>(
-        num_w_boxes, std::vector<Cell *>(num_h_boxes));
-    // direction‐vectors for 8 neighbors:
-    //    0: N   ( 0,-1)
-    //    1: NE  ( 1,-1)
-    //    2: E   ( 1, 0)
-    //    3: SE  ( 1, 1)
-    //    4: S   ( 0, 1)
-    //    5: SW  (-1, 1)
-    //    6: W   (-1, 0)
-    //    7: NW  (-1,-1)
-    static constexpr int dx[8] = {0, 1, 1, 1, 0, -1, -1, -1};
-    static constexpr int dy[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
+    
 
     emp::Random random{worldConfig.SEED()};
     OrgWorld world{random};
@@ -65,8 +53,6 @@ public:
         SetupCanvas();
         SetupConfigPanel();
         SetupWorld();
-        SetupCellGrid();
-        LinkAllNeighbors();
     }
 
     /**
@@ -133,48 +119,13 @@ public:
         // setup the world
         world.SetPopStruct_Grid(num_w_boxes, num_h_boxes);
         world.Resize(num_h_boxes, num_w_boxes);
+        world.LinkAllNeighbors(num_w_boxes, num_h_boxes);
         for (int i = 0; i < worldConfig.START_NUM(); i++)
         {
             Organism *new_org = new Organism(&world);
             world.Inject(*new_org);
         }
     }
-
-    /**
-     * Input: None
-     *
-     * Output: None
-     *
-     * Purpose: Setup the cell grid, iterate through them and set linear index equivalent to how organism indices are set.
-     */
-    void SetupCellGrid()
-    {
-        int org_num = 0;
-        for (int x = 0; x < num_w_boxes; x++)
-        {
-            for (int y = 0; y < num_h_boxes; y++)
-            {
-                Cell* new_cell = new Cell();
-                new_cell->SetIndex(org_num);
-                cell_grid[x][y] = new_cell;
-                org_num++;
-            }
-        }
-    }
-
-   void LinkAllNeighbors() {
-    for (int x = 0; x < num_w_boxes; ++x) {
-      for (int y = 0; y < num_h_boxes; ++y) {
-        Cell * C = cell_grid[x][y];
-        // Fill its 8‐entry connections[] vector:
-        for (int dir = 0; dir < 8; ++dir) {
-          int nx = emp::Mod(x + dx[dir], num_w_boxes);
-          int ny = emp::Mod(y + dy[dir], num_h_boxes);
-          C->SetConnection(dir, cell_grid[nx][ny]);
-        }
-      }
-    }
-  }
 
     // /**
     //  * Input: None
