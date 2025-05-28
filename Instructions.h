@@ -197,7 +197,8 @@ using Library =
                            sgpl::RandomDraw,
                            sgpl::Terminal, 
                            IOInstruction, NandInstruction,
-                           ReproduceInstruction>;
+                           ReproduceInstruction,
+                           GetFacing, RotateLeft, RotateRight, GetID, SendMessage, RetrieveMessage>;
 
 using Spec = sgpl::Spec<Library, OrgState>;
 
