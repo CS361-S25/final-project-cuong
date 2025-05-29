@@ -112,14 +112,10 @@ public:
      *
      * Output: None
      *
-     * Purpose: Setup the world and the initial organisms, then add it to the document.
+     * Purpose: Add the initial organisms to the document.
      */
     void SetupWorld()
     {
-        // setup the world
-        world.SetPopStruct_Grid(num_w_boxes, num_h_boxes);
-        world.Resize(num_h_boxes, num_w_boxes);
-        world.LinkAllNeighbors(num_w_boxes, num_h_boxes);
         for (int i = 0; i < worldConfig.START_NUM(); i++)
         {
             Organism *new_org = new Organism(&world);

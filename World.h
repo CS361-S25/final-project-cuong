@@ -15,19 +15,21 @@ class OrgWorld : public emp::World<Organism>
   std::vector<Task *> tasks;
   std::vector<emp::Ptr<emp::DataMonitor<int>>> solve_monitors;
   std::vector<int> solve_counts;
+  const int num_h_boxes = worldConfig.WORLD_LEN();
+  const int num_w_boxes = worldConfig.WORLD_WIDTH();
 
-  std::vector<Cell *> cell_grid = std::vector<Cell *>(GetSize());
-    // direction‐vectors for 8 neighbors:
-    //    0: N   ( 0,-1)
-    //    1: NE  ( 1,-1)
-    //    2: E   ( 1, 0)
-    //    3: SE  ( 1, 1)
-    //    4: S   ( 0, 1)
-    //    5: SW  (-1, 1)
-    //    6: W   (-1, 0)
-    //    7: NW  (-1,-1)
-    static constexpr int dx[8] = {0, 1, 1, 1, 0, -1, -1, -1};
-    static constexpr int dy[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
+  std::vector<std::vector<Cell*>> cell_grid = std::vector<std::vector<Cell*>>( num_w_boxes, std::vector<Cell*>(num_h_boxes) );
+  // direction‐vectors for 8 neighbors:
+  //    0: N   ( 0,-1)
+  //    1: NE  ( 1,-1)
+  //    2: E   ( 1, 0)
+  //    3: SE  ( 1, 1)
+  //    4: S   ( 0, 1)
+  //    5: SW  (-1, 1)
+  //    6: W   (-1, 0)
+  //    7: NW  (-1,-1)
+  static constexpr int dx[8] = {0, 1, 1, 1, 0, -1, -1, -1};
+  static constexpr int dy[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
 public:
 
@@ -41,7 +43,9 @@ public:
   OrgWorld(emp::Random &_random) : emp::World<Organism>(_random) {
     AddTask(new Initial());
     AddTask(new SendHighest());
+    SetupWorld();
     SetupCellGrid();
+    LinkAllNeighbors();
   }
 
   /**
@@ -63,17 +67,29 @@ public:
   const pop_t &GetPopulation() { return pop; }
   auto GetTasks() { return tasks; }
   auto GetSolveMonitors() { return solve_monitors; }
-  // Cell * GetCellByLinearIndex(int idx) const {
-  //   const int W = GetWidth();   // == num_w_boxes
-  //   const int H = GetHeight();  // == num_h_boxes
-  //   const int total = W * H;
-  //   if (idx < 0 || idx >= total) return nullptr;
+  Cell * GetCellByLinearIndex(int idx) const {
+    const int total = num_w_boxes * num_h_boxes;
+    if (idx < 0 || idx >= total) return nullptr;
 
-  //   // linear index = x*H + y
-  //   const int x = idx / H;
-  //   const int y = idx % H;
-  //   return cell_grid[x][y];
-  // }
+    // linear index = x*H + y
+    const int x = idx / num_h_boxes;
+    const int y = idx % num_h_boxes;
+    return cell_grid[x][y];
+  }
+
+  /**
+     * Input: None
+     *
+     * Output: None
+     *
+     * Purpose: Setup the world's grid structure
+     */
+    void SetupWorld()
+    {
+        // setup the world
+        SetPopStruct_Grid(num_w_boxes, num_h_boxes);
+        Resize(num_h_boxes, num_w_boxes);
+    }
 
   /**
    * Input: A task pointer
@@ -141,23 +157,30 @@ public:
      */
     void SetupCellGrid()
     {
-        for (int i = 0; i < GetSize(); i++)
+        int org_num = 0;
+        for (int x = 0; x < num_w_boxes; x++)
         {
-            Cell* new_cell = new Cell();
-            new_cell->SetIndex(i);
-            cell_grid[i] = new_cell;
+            for (int y = 0; y < num_h_boxes; y++)
+            {
+                Cell* new_cell = new Cell();
+                new_cell->SetIndex(org_num);
+                std::cout << "Made cell index " << org_num <<std::endl;
+                cell_grid[x][y] = new_cell;
+                org_num++;
+            }
         }
     }
 
-   void LinkAllNeighbors(int w, int h) {
-    for (int x = 0; x < w; ++x) {
-      for (int y = 0; y < h; ++y) {
-        Cell * C = cell_grid[x*h+y];
+   void LinkAllNeighbors() {
+    for (int x = 0; x < num_w_boxes; ++x) {
+      for (int y = 0; y < num_h_boxes; ++y) {
+        Cell * C = cell_grid[x][y];
         // Fill its 8‐entry connections[] vector:
         for (int dir = 0; dir < 8; ++dir) {
-          int nx = emp::Mod(x + dx[dir], w);
-          int ny = emp::Mod(y + dy[dir], h);
-          C->SetConnection(dir, cell_grid[nx*h+ny]);
+          int nx = emp::Mod(x + dx[dir], num_w_boxes);
+          int ny = emp::Mod(y + dy[dir], num_h_boxes);
+          C->SetConnection(dir, cell_grid[nx][ny]);
+          std::cout << "Connected (" << x << "," << y <<") with dir " << dir << " (" << nx << "," << ny <<")" <<std::endl;
         }
       }
     }
@@ -185,11 +208,14 @@ public:
    * Purpose: Runs Process() on all organisms in the world at random order.
    */
   void ProcessAllOrganisms() {
+    std::cout << "Process 0" <<std::endl;
     emp::vector<size_t> schedule = emp::GetPermutation(GetRandom(), GetSize());
+    std::cout << "Process 1" <<std::endl;
     for (int i : schedule) {
       if (!IsOccupied(i)) {
         continue;
       }
+      std::cout << "Process 2" <<std::endl;
       pop[i]->Process(i);
     }
   }
@@ -244,7 +270,7 @@ public:
     for(int i = 0; i < GetSize(); i++){
       if (!IsOccupied(i))
         continue;
-      pop[i]->SetCell(cell_grid[i]);
+      pop[i]->SetCell(GetCellByLinearIndex(i));
     }
   }
   
@@ -259,10 +285,12 @@ public:
   void Update() {
 
     emp::World<Organism>::Update();
-
+    std::cout << "Update 0" <<std::endl;
     this->ProcessAllOrganisms();
-    this->MoveAllOrganisms();
+    std::cout << "Update 1" <<std::endl;
+    // this->MoveAllOrganisms();
     this->ReproduceAllValidOrganisms();
+    std::cout << "Update 2" <<std::endl;
     this->BindAllOrganismsToCell();
   }
     
@@ -297,9 +325,20 @@ public:
   }
 
   void SendMessage(int location, int dir, std::string message) {
+    std::cout << "SendMessage 0" <<std::endl;
     Organism* sender = pop[location];
-    int receiver_index = sender->GetCell()->GetConnection(dir)->GetIndex();
+    std::cout << "SendMessage 1" <<std::endl;
+    std::cout << "sender location: "  << location <<std::endl;
+    std::cout << "sending to dir: "  << dir <<std::endl;
+    Cell* sender_cell = sender->GetCell();
+    std::cout << "SendMessage 2" <<std::endl;
+    std::cout << "sender index: "  << sender_cell->GetIndex() <<std::endl;
+    Cell* target_cell = sender_cell->GetConnection(dir);
+    std::cout << "SendMessage 3" <<std::endl;
+    int receiver_index = target_cell->GetIndex();
+    std::cout << "SendMessage 4" <<std::endl;
     if (IsOccupied(receiver_index)) {
+    std::cout << "SendMessage 5" <<std::endl;
       pop[receiver_index]->SetInbox(message);
     }
   }

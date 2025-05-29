@@ -46,6 +46,8 @@ class SendHighest : public Task {
 public:
   double CheckOutput(OrgState &state) override {
     std::string sent = state.message;
+    std::cout << "CheckOutput SendHighest 0" <<std::endl;
+    std::cout << state.cell->GetID() <<std::endl;
     int cell_id  = std::stoi( state.cell->GetID() );
     int received = std::stoi( state.inbox );
 

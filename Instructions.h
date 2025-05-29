@@ -81,6 +81,7 @@ struct GetFacing {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
+        std::cout << "Instruction GetFacing 0" <<std::endl;
         core.registers[inst.args[0]] = state.cell->GetFacing();
     }
 
@@ -93,6 +94,7 @@ struct RotateLeft {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
+        std::cout << "Instruction RotateLeft 0" <<std::endl;
         state.cell->RotateLeft();
     }
 
@@ -105,6 +107,7 @@ struct RotateRight {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
+        std::cout << "Instruction RotateRight 0" <<std::endl;
         state.cell->RotateRight();
     }
 
@@ -117,6 +120,9 @@ struct GetID {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
+        
+        std::cout << "Instruction GetID 0" <<std::endl;
+        std::cout << state.cell->GetID() <<std::endl;
         core.registers[inst.args[0]] = std::stoi(state.cell->GetID());
     }
 
@@ -129,11 +135,17 @@ struct SendMessage {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
+        std::cout << "Instruction SendMessage 0" <<std::endl;
         emp::WorldPosition loc = state.current_location;
+        std::cout << "Instruction SendMessage 1" <<std::endl;
         int dir = emp::Mod(static_cast<int>(core.registers[inst.args[1]]) , 8);
+        std::cout << "Instruction SendMessage 2" <<std::endl;
         std::string message = std::to_string(core.registers[inst.args[0]]);
+        std::cout << "Instruction SendMessage 3" <<std::endl;
         state.message = message;
-        state.world->SendMessage(loc, dir, message);
+        std::cout << "Instruction SendMessage 4" <<std::endl;
+        state.world->SendMessage(loc.GetIndex(), dir, message);
+        std::cout << "Instruction SendMessage 5" <<std::endl;
     }
 
     static std::string name() { return "SendMessage"; } 
@@ -145,6 +157,8 @@ struct RetrieveMessage {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
+        std::cout << "Instruction RetrieveMessage 0" <<std::endl;
+        std::cout << state.inbox <<std::endl;
         state.retrieved = state.inbox;
         core.registers[inst.args[0]] = std::stoi(state.inbox);
     }

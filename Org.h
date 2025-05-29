@@ -59,10 +59,16 @@ public:
    * Purpose: Saves the information in the CPU, run the CPU for some cycles, and age up the organism.
    */
   void Process(emp::WorldPosition current_location) {
+    std::cout << "Org Process 0" <<std::endl;
     //cpu.state.task_done = false;
     AddPoints(1.0);
+    std::cout << "Org Process 1" <<std::endl;
     cpu.state.current_location = current_location;
+    std::cout << "Org Process 2" <<std::endl;
+    std::cout << "Organism at " << current_location.GetIndex() << " has " << cpu.state.points << " points." <<std::endl;
+    std::cout << "Org Process 3" <<std::endl;
     cpu.RunCPUStep(10);
+    std::cout << "Org Process 4" <<std::endl;
     cpu.state.age++;
   }
 
