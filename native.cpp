@@ -31,8 +31,12 @@ int main(int argc, char *argv[]) {
   world.SetupSolveFile("solveNative.data").SetTimingRepeat(worldConfig.UPDATE_RECORD_FREQUENCY());
   std::cout << "Test 4" <<std::endl;
 
-  for (int update = 0; update < worldConfig.UPDATE_NUM(); update++) {
+  // for (int update = 0; update < worldConfig.UPDATE_NUM(); update++) {
+  //   world.Update();
+  // }
+  while (1) {
     world.Update();
   }
+  std::cout << "Test 5" <<std::endl;
 
 }

@@ -164,8 +164,9 @@ public:
             {
                 Cell* new_cell = new Cell();
                 new_cell->SetIndex(org_num);
-                std::cout << "Made cell index " << org_num <<std::endl;
+                // std::cout << "Made cell index " << org_num <<std::endl;
                 cell_grid[x][y] = new_cell;
+                // std::cout << cell_grid[x][y]->GetIndex() << std::endl;
                 org_num++;
             }
         }
@@ -180,7 +181,7 @@ public:
           int nx = emp::Mod(x + dx[dir], num_w_boxes);
           int ny = emp::Mod(y + dy[dir], num_h_boxes);
           C->SetConnection(dir, cell_grid[nx][ny]);
-          std::cout << "Connected (" << x << "," << y <<") with dir " << dir << " (" << nx << "," << ny <<")" <<std::endl;
+          // std::cout << "Connected (" << x << "," << y <<") with dir " << dir << " (" << nx << "," << ny <<")" <<std::endl;
         }
       }
     }
@@ -193,12 +194,12 @@ public:
    *
    * Purpose: Removes the organism from the world but keeping a reference to it.
    */
-  emp::Ptr<Organism> ExtractOrganism(int i) {
-    emp::Ptr<Organism> org = pop[i];
-    pop[i] = nullptr;
-    org->SetCell(nullptr);
-    return org;
-  }
+  // emp::Ptr<Organism> ExtractOrganism(int i) {
+  //   emp::Ptr<Organism> org = pop[i];
+  //   pop[i] = nullptr;
+  //   org->SetCell(nullptr);
+  //   return org;
+  // }
 
   /**
    * Input: None
@@ -208,42 +209,15 @@ public:
    * Purpose: Runs Process() on all organisms in the world at random order.
    */
   void ProcessAllOrganisms() {
-    std::cout << "Process 0" <<std::endl;
+    // std::cout << "Process 0" <<std::endl;
     emp::vector<size_t> schedule = emp::GetPermutation(GetRandom(), GetSize());
-    std::cout << "Process 1" <<std::endl;
+    // std::cout << "Process 1" <<std::endl;
     for (int i : schedule) {
       if (!IsOccupied(i)) {
         continue;
       }
-      std::cout << "Process 2" <<std::endl;
+      // std::cout << "Process 2" <<std::endl;
       pop[i]->Process(i);
-    }
-  }
-
-  /**
-   * Input: None
-   *
-   * Output: None
-   *
-   * Purpose: Move all organisms in the world around at random order into empty space if possible.
-   */
-  void MoveAllOrganisms() {
-    size_t world_size = GetSize();
-    emp::vector<size_t> move_schedule = emp::GetPermutation(GetRandom(), world_size);
-    for (size_t i : move_schedule) {
-      if (!IsOccupied(i))
-        continue;
-      emp::Ptr<Organism> mover = ExtractOrganism(i);
-      int target = i;
-      for (int attempt = 0; attempt < 8; ++attempt) {
-        emp::WorldPosition pos = GetRandomNeighborPos(i);
-        if (!pos.IsValid()) continue;
-        if (IsOccupied(pos)) continue;
-        target = pos.GetIndex();
-        break;
-      }
-
-      AddOrgAt(mover, target);
     }
   }
 
@@ -260,6 +234,7 @@ public:
       std::optional<Organism> offspring =
           pop[location.GetIndex()]->CheckReproduction();
       if (offspring.has_value()) {
+        std::cout << "Organism at index " << location.GetIndex() << " reproduced!" << std::endl;
         DoBirth(offspring.value(), location.GetIndex());
       }
     }
@@ -285,13 +260,15 @@ public:
   void Update() {
 
     emp::World<Organism>::Update();
-    std::cout << "Update 0" <<std::endl;
-    this->ProcessAllOrganisms();
-    std::cout << "Update 1" <<std::endl;
-    // this->MoveAllOrganisms();
-    this->ReproduceAllValidOrganisms();
-    std::cout << "Update 2" <<std::endl;
+    // std::cout << "Update 0" <<std::endl;
     this->BindAllOrganismsToCell();
+    // std::cout << "Update 1" <<std::endl;
+    this->ProcessAllOrganisms();
+    // this->MoveAllOrganisms();
+    // std::cout << "Update 2" <<std::endl;
+    this->ReproduceAllValidOrganisms();
+    // std::cout << "Update 3" <<std::endl;
+    // this->BindAllOrganismsToCell();
   }
     
   /**
@@ -307,11 +284,15 @@ public:
     for (size_t i = 0; i < tasks.size(); ++i) {
       double pts = tasks[i]->CheckOutput(state);
       if (pts > 0.0) {
-        std::cout << "Completed: " << tasks[i]->name()
-        << " (+ " << pts << " points)\n";
+        // int completed_linear_index = state.cell->GetIndex();
+        // Organism* achiever = pop[completed_linear_index];
+        std::cout << "Org at index " 
+        // << completed_linear_index 
+        << " Completed: " << tasks[i]->name() << " (+ " << pts << " points)\n";
         state.points += pts;
         RecordSolve(i);
         state.best_task = std::max(state.best_task, i);
+        exit(0);
       }
     }
   }
@@ -324,21 +305,21 @@ public:
     reproduce_queue.push_back(location);
   }
 
-  void SendMessage(int location, int dir, std::string message) {
-    std::cout << "SendMessage 0" <<std::endl;
+  void SendMessage(int location, int dir, int message) {
+    // std::cout << "SendMessage 0" <<std::endl;
     Organism* sender = pop[location];
-    std::cout << "SendMessage 1" <<std::endl;
-    std::cout << "sender location: "  << location <<std::endl;
-    std::cout << "sending to dir: "  << dir <<std::endl;
+    // std::cout << "SendMessage 1" <<std::endl;
+    // std::cout << "sender location: "  << location <<std::endl;
+    // std::cout << "sending to dir: "  << dir <<std::endl;
     Cell* sender_cell = sender->GetCell();
-    std::cout << "SendMessage 2" <<std::endl;
-    std::cout << "sender index: "  << sender_cell->GetIndex() <<std::endl;
+    // std::cout << "SendMessage 2" <<std::endl;
+    // std::cout << "sender index: "  << sender_cell->GetIndex() <<std::endl;
     Cell* target_cell = sender_cell->GetConnection(dir);
-    std::cout << "SendMessage 3" <<std::endl;
+    // std::cout << "SendMessage 3" <<std::endl;
     int receiver_index = target_cell->GetIndex();
-    std::cout << "SendMessage 4" <<std::endl;
+    // std::cout << "SendMessage 4" <<std::endl;
     if (IsOccupied(receiver_index)) {
-    std::cout << "SendMessage 5" <<std::endl;
+    // std::cout << "SendMessage 5" <<std::endl;
       pop[receiver_index]->SetInbox(message);
     }
   }

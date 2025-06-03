@@ -32,11 +32,11 @@ public:
 
   void SetFacing(int new_facing) {cpu.state.facing = new_facing;}
   
-  void SetMessage(std::string new_message) {cpu.state.message = new_message;}
-  std::string GetMessage() {return cpu.state.message;}
+  void SetMessage(unsigned int new_message) {cpu.state.message = new_message;}
+  unsigned int GetMessage() {return cpu.state.message;}
   
-  void SetInbox(std::string new_inbox) {cpu.state.inbox = new_inbox;}
-  std::string GetInbox() {return cpu.state.inbox;}
+  void SetInbox(unsigned int new_inbox) {cpu.state.inbox = new_inbox;}
+  unsigned int GetInbox() {return cpu.state.inbox;}
   
   void Reset() { cpu.Reset(); }
   void Mutate() { cpu.Mutate(); }
@@ -59,16 +59,17 @@ public:
    * Purpose: Saves the information in the CPU, run the CPU for some cycles, and age up the organism.
    */
   void Process(emp::WorldPosition current_location) {
-    std::cout << "Org Process 0" <<std::endl;
+    // std::cout << "Org Process 0" <<std::endl;
     //cpu.state.task_done = false;
     AddPoints(1.0);
-    std::cout << "Org Process 1" <<std::endl;
+    std::cout << cpu.state.points <<std::endl;
+    // std::cout << "Org Process 1" <<std::endl;
     cpu.state.current_location = current_location;
-    std::cout << "Org Process 2" <<std::endl;
-    std::cout << "Organism at " << current_location.GetIndex() << " has " << cpu.state.points << " points." <<std::endl;
-    std::cout << "Org Process 3" <<std::endl;
+    // std::cout << "Org Process 2" <<std::endl;
+    // std::cout << "Organism at " << current_location.GetIndex() << " has " << cpu.state.points << " points." <<std::endl;
+    // std::cout << "Org Process 3" <<std::endl;
     cpu.RunCPUStep(10);
-    std::cout << "Org Process 4" <<std::endl;
+    // std::cout << "Org Process 4" <<std::endl;
     cpu.state.age++;
   }
 

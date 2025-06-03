@@ -33,11 +33,11 @@ struct OrgState {
   // Current facing direction of the cell (0-N to 7-NW)
   int facing;
   // The message the organism will send
-  std::string message;
+  unsigned int message;
   // The message inbox
-  std::string inbox;
+  unsigned int inbox;
   // The message retrieved from inbox
-  std::string retrieved;
+  unsigned int retrieved;
 
   /**
   * Adds an input number to the tracker

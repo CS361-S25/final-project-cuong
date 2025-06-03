@@ -45,16 +45,16 @@ class Initial : public Task {
 class SendHighest : public Task {
 public:
   double CheckOutput(OrgState &state) override {
-    std::string sent = state.message;
-    std::cout << "CheckOutput SendHighest 0" <<std::endl;
-    std::cout << state.cell->GetID() <<std::endl;
-    int cell_id  = std::stoi( state.cell->GetID() );
-    int received = std::stoi( state.inbox );
+    // std::cout << "CheckOutput SendHighest 0" <<std::endl;
+    std::cout << state.cell->GetIndex() <<std::endl;
+    // std::cout << "CheckOutput SendHighest 1" <<std::endl;
+    unsigned int cell_id  = state.cell->GetID();
+    // std::cout << "CheckOutput SendHighest 2" <<std::endl;
+    unsigned int retrieved = state.retrieved;
 
-    int max_val = std::max(cell_id, received);
-    std::string max_str = std::to_string(max_val);
+    unsigned int max_val = std::max(cell_id, retrieved);
 
-    if ( sent.find(max_str) != std::string::npos ) {
+    if ( state.message == max_val ) {
       return 10.0;
     }
     else {
