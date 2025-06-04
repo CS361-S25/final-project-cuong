@@ -39,6 +39,8 @@ class AEAnimator : public emp::web::Animate
     const double RECT_SIDE = worldConfig.CELL_SIZE();
     const double width{num_w_boxes * RECT_SIDE};
     const double height{num_h_boxes * RECT_SIDE};
+    static constexpr double dir_dx[8] = {  0,  1,  1,  1,  0,  -1, -1, -1 };
+    static constexpr double dir_dy[8] = { -1, -1,  0,  1,  1,   1,  0, -1 };
     
 
     emp::Random random{worldConfig.SEED()};
@@ -288,7 +290,36 @@ public:
                     // const std::string fill = OrgColor(org, st.max);
                     canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE,
                                 "black", "black");
+                    
+                    size_t best = org.GetBestTask();
+                    std::string arrow_color = "red";
+                    if (best == 1) {arrow_color = "green";}
+
+                    Cell* C = world.GetCellByLinearIndex(org_num);
+                    int dir  = C->GetFacing();
+                    double cx = x * RECT_SIDE + (RECT_SIDE / 2.0);
+                    double cy = y * RECT_SIDE + (RECT_SIDE / 2.0);
+
+                    double step = 0.4 * RECT_SIDE;
+                    double ex = cx + dir_dx[dir] * step;
+                    double ey = cy + dir_dy[dir] * step;
+
+                    canvas.Line(cx, cy, ex, ey, arrow_color, 2);
+
+                    double arrowSize = 0.15 * RECT_SIDE;
+                    double angle = std::atan2(dir_dy[dir], dir_dx[dir]);
+                    double wing1 = angle +  M_PI/6.0; // +30° in radians
+                    double wing2 = angle -  M_PI/6.0; // –30° in radians
+
+                    double x1 = ex - arrowSize * std::cos(wing1);
+                    double y1 = ey - arrowSize * std::sin(wing1);
+                    double x2 = ex - arrowSize * std::cos(wing2);
+                    double y2 = ey - arrowSize * std::sin(wing2);
+
+                    canvas.Line(ex, ey, x1, y1, arrow_color, 2);
+                    canvas.Line(ex, ey, x2, y2, arrow_color, 2);
                 }
+                
                 org_num++;
             }
         }

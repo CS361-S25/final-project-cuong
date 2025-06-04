@@ -23,7 +23,7 @@ public:
   void AddPoints(double _in) { cpu.state.points += _in; }
   double GetPoints() { return cpu.state.points; }
   // size_t GetAge() { return cpu.state.age; }
-  // size_t GetBestTask() { return cpu.state.best_task; }
+  size_t GetBestTask() { return cpu.state.best_task; }
 
   emp::WorldPosition GetLocation(){return cpu.state.current_location;}
  
@@ -62,7 +62,7 @@ public:
     // std::cout << "Org Process 0" <<std::endl;
     //cpu.state.task_done = false;
     AddPoints(1.0);
-    std::cout << cpu.state.points <<std::endl;
+    // std::cout << "Org at " << cpu.state.cell->GetIndex() << " has points: " <<  cpu.state.points <<std::endl;
     // std::cout << "Org Process 1" <<std::endl;
     cpu.state.current_location = current_location;
     // std::cout << "Org Process 2" <<std::endl;

@@ -9,7 +9,8 @@
  * Represents the virtual CPU and the program genome for an organism in the SGP
  * mode.
  */
-class CPU {
+class CPU
+{
   sgpl::Cpu<Spec> cpu;
   sgpl::Program<Spec> program;
 
@@ -21,11 +22,13 @@ class CPU {
    * Purpose: Initializes the jump table and input buffer in the CPUState.
    * Should be called when a new CPU is created or the program is changed.
    */
-  void InitializeState() {
+  void InitializeState()
+  {
     cpu.InitializeAnchors(program);
     // Fill the input buffer with random values so they can't cheat and exploit
     // the zeroes that would otherwise be here (e.g. 0^2 is just 0)
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
       state.last_inputs[i] = sgpl::tlrand.Get().GetUInt();
     }
   }
@@ -36,7 +39,8 @@ public:
   /**
    * Constructs a new CPU for an ancestor organism with a random genome.
    */
-  CPU(emp::Ptr<OrgWorld> world) : program(100), state{world} {
+  CPU(emp::Ptr<OrgWorld> world) : program(100), state{world}
+  {
     InitializeState();
   }
 
@@ -44,7 +48,8 @@ public:
    * Constructs a new CPU with a copy of an existing genome.
    */
   CPU(emp::Ptr<OrgWorld> world, const sgpl::Program<Spec> &program)
-      : program(program), state{world} {
+      : program(program), state{world}
+  {
     InitializeState();
   }
 
@@ -55,7 +60,8 @@ public:
    *
    * Purpose: Resets the CPU to its initial state.
    */
-  void Reset() {
+  void Reset()
+  {
     cpu.Reset();
     state = OrgState{state.world};
     InitializeState();
@@ -68,9 +74,11 @@ public:
    *
    * Purpose: Steps the CPU forward a certain number of cycles.
    */
-  void RunCPUStep(size_t n_cycles) {
+  void RunCPUStep(size_t n_cycles)
+  {
     // std::cout << "Run CPU 0" <<std::endl;
-    if (!cpu.HasActiveCore()) {
+    if (!cpu.HasActiveCore())
+    {
       // std::cout << "Run CPU 0.5" <<std::endl;
       cpu.TryLaunchCore();
     }
@@ -79,7 +87,6 @@ public:
     // std::cout << n_cycles <<std::endl;
     sgpl::execute_cpu_n_cycles<Spec>(n_cycles, cpu, program, state);
     // std::cout << "Run CPU 2" <<std::endl;
-
   }
 
   /**
@@ -89,8 +96,9 @@ public:
    *
    * Purpose: Mutates the genome code stored in the CPU.
    */
-  void Mutate() {
-    //TODO: apply mutations!
+  void Mutate()
+  {
+    // TODO: apply mutations!
     InitializeState();
     program.ApplyPointMutations(worldConfig.MUTATION_RATE());
     // Probability each genome bit is flipped
@@ -117,48 +125,64 @@ private:
   void PrintOp(const sgpl::Instruction<Spec> &ins,
                const std::map<std::string, size_t> &arities,
                sgpl::JumpTable<Spec, Spec::global_matching_t> &table,
-               std::ostream &out = std::cout) const {
+               std::ostream &out = std::cout) const
+  {
     const std::string &name = ins.GetOpName();
-    if (arities.count(name)) {
+    if (arities.count(name))
+    {
       // Simple instruction
       out << "    " << emp::to_lower(name);
-      for (size_t i = 0; i < 12 - std::min(name.length(), 12ul); i++) {
+      for (size_t i = 0; i < 12 - std::min(name.length(), 12ul); i++)
+      {
         out << ' ';
       }
       size_t arity = arities.at(name);
       bool first = true;
-      for (size_t i = 0; i < arity; i++) {
-        if (!first) {
+      for (size_t i = 0; i < arity; i++)
+      {
+        if (!first)
+        {
           out << ", ";
         }
         first = false;
         out << 'r' << (int)ins.args[i];
       }
-    } else {
+    }
+    else
+    {
       // Jump or anchor with a tag
       // Match the tag to the correct global anchor, then print it out as a
       // 2-letter code AA, AB, etc.
       auto match = table.MatchRegulated(ins.tag);
       std::string tag_name;
-      if (match.size()) {
+      if (match.size())
+      {
         size_t tag = match.front();
         tag_name += 'A' + tag / 26;
         tag_name += 'A' + tag % 26;
-      } else {
+      }
+      else
+      {
         tag_name = "<nowhere>";
       }
 
-      if (name == "Global Jump If") {
+      if (name == "Global Jump If")
+      {
         // "Global Jump If" is too long, just print "jump if"
         out << "    "
             << "jump if";
-        for (size_t i = 0; i < 12 - 7; i++) {
+        for (size_t i = 0; i < 12 - 7; i++)
+        {
           out << ' ';
         }
         out << 'r' << (int)ins.args[0] << ", " << tag_name;
-      } else if (name == "Global Anchor") {
+      }
+      else if (name == "Global Anchor")
+      {
         out << tag_name << ':';
-      } else {
+      }
+      else
+      {
         out << "<unknown " << name << ">";
       }
     }
@@ -174,12 +198,25 @@ public:
    * Purpose: Prints out a human-readable representation of the program code of
    * the organism's genome to standard output.
    */
-  void PrintGenome(std::ostream &out = std::cout) {
-    std::map<std::string, size_t> arities{{"Nand", 3}, {"Add", 3},
-                                          {"Subtract", 3}, {"Divide", 3},
-                                          {"IO", 1},       {"Reproduce", 0}};
+  void PrintGenome(std::ostream &out = std::cout)
+  {
+    std::map<std::string, size_t> arities{
+      {"Nand", 3}, 
+      {"Add", 3}, 
+      {"Subtract", 3}, 
+      {"Divide", 3}, 
+      {"IO", 1}, 
+      {"Reproduce", 0},
+      {"GetFacing", 0},
+      {"RotateLeft", 0},
+      {"RotateRight",0},
+      {"GetID", 1},
+      {"SendMessage", 2},
+      {"RetrieveMessage", 1}
+  };
 
-    for (auto i : program) {
+    for (auto i : program)
+    {
       PrintOp(i, arities, cpu.GetActiveCore().GetGlobalJumpTable(), out);
     }
   }

@@ -67,13 +67,14 @@ struct ReproduceInstruction
   {
     if (state.points > 20)
     {
+      // std::cout << "Org at " << state.cell->GetIndex() << " can reproduce" << std::endl;
       state.world->ReproduceOrg(state.current_location);
       state.points = 0;
     }
   }
 
   static std::string name() { return "Reproduce"; }
-  static size_t prevalence() { return 1; }
+  static size_t prevalence() { return 10; }
 };
 
 struct GetFacing { 

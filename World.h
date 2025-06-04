@@ -234,7 +234,7 @@ public:
       std::optional<Organism> offspring =
           pop[location.GetIndex()]->CheckReproduction();
       if (offspring.has_value()) {
-        std::cout << "Organism at index " << location.GetIndex() << " reproduced!" << std::endl;
+        // std::cout << "Organism at index " << location.GetIndex() << " reproduced!" << std::endl;
         DoBirth(offspring.value(), location.GetIndex());
       }
     }
@@ -292,7 +292,7 @@ public:
         state.points += pts;
         RecordSolve(i);
         state.best_task = std::max(state.best_task, i);
-        exit(0);
+        // exit(0);
       }
     }
   }

@@ -46,7 +46,7 @@ class SendHighest : public Task {
 public:
   double CheckOutput(OrgState &state) override {
     // std::cout << "CheckOutput SendHighest 0" <<std::endl;
-    std::cout << state.cell->GetIndex() <<std::endl;
+    // std::cout << "Checking output of organism index: " << state.cell->GetIndex() <<std::endl;
     // std::cout << "CheckOutput SendHighest 1" <<std::endl;
     unsigned int cell_id  = state.cell->GetID();
     // std::cout << "CheckOutput SendHighest 2" <<std::endl;

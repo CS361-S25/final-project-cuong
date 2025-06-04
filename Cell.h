@@ -22,9 +22,9 @@ public:
     config(cfg), random(cfg.SEED()), 
     id(random.GetUInt()), 
     linear_index(0),
-    connections(std::vector<Cell *>(8)),
-    facing(static_cast<int>(random.GetUInt(8)))
+    connections(std::vector<Cell *>(8))
     {
+        facing = static_cast<int>(random.GetUInt(8));
     }
 
     unsigned int GetID() { return id; }
