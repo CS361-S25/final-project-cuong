@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <iostream>
 #include "OrgState.h"
+#include "World.h"
 
 /**
  * The interface for a task that organisms can complete.
@@ -40,6 +41,25 @@ class Initial : public Task {
 
     std::string name() const override { return "Initial"; }
   };
+
+  
+// Task: returns the highest value between received cell ID and org's cell's cell ID
+class FaceAnother : public Task {
+public:
+  double CheckOutput(OrgState &state) override {
+    // std::cout << "CheckOutput FaceAnother 0" <<std::endl;
+    Cell* cur_cell = state.cell;
+    Cell* tar_cell = cur_cell->GetFacingCell();
+    // std::cout << (tar_cell->GetFacingCell() == cur_cell) <<std::endl;
+    if ( tar_cell->GetFacingCell() == cur_cell ) {
+      return 1.0;
+    }
+    else {
+      return 0.0;
+    }
+  }
+  std::string name() const override { return "Face Another Cell"; }
+};
 
 // Task: returns the highest value between received cell ID and org's cell's cell ID
 class SendHighest : public Task {

@@ -125,102 +125,102 @@ public:
         }
     }
 
-    // /**
-    //  * Input: None
-    //  *
-    //  * Output: Number of organisms in the world, the min and max points among them, plus their mean and variance of points
-    //  *
-    //  * Purpose: Compute the stats to assist in displaying the organisms.
-    //  */
-    // Stats ComputeStats()
-    // {
-    //     Stats s;
-    //     s.max = 0.0;
-    //     s.min = std::numeric_limits<double>::infinity();
-    //     double sum = 0.0, sum_sq = 0.0;
-    //     s.count = 0;
+    /**
+     * Input: None
+     *
+     * Output: Number of organisms in the world, the min and max points among them, plus their mean and variance of points
+     *
+     * Purpose: Compute the stats to assist in displaying the organisms.
+     */
+    Stats ComputeStats()
+    {
+        Stats s;
+        s.max = 0.0;
+        s.min = std::numeric_limits<double>::infinity();
+        double sum = 0.0, sum_sq = 0.0;
+        s.count = 0;
 
-    //     for (int i = 0; i < world.GetSize(); ++i)
-    //     {
-    //         if (!world.IsOccupied(i))
-    //             continue;
-    //         double p = world.GetOrg(i).GetPoints();
-    //         s.max = std::max(s.max, p);
-    //         s.min = std::min(s.min, p);
-    //         sum += p;
-    //         sum_sq += p * p;
-    //         ++s.count;
-    //     }
-    //     if (s.count == 0)
-    //     {
-    //         s.min = 0.0;
-    //         s.max = 0.0;
-    //     }
-    //     s.mean = s.count ? (sum / s.count) : 0.0;
-    //     s.variance = s.count
-    //                      ? (sum_sq / s.count) - (s.mean * s.mean)
-    //                      : 0.0;
-    //     return s;
-    // }
+        for (int i = 0; i < world.GetSize(); ++i)
+        {
+            if (!world.IsOccupied(i))
+                continue;
+            double p = world.GetOrg(i).GetPoints();
+            s.max = std::max(s.max, p);
+            s.min = std::min(s.min, p);
+            sum += p;
+            sum_sq += p * p;
+            ++s.count;
+        }
+        if (s.count == 0)
+        {
+            s.min = 0.0;
+            s.max = 0.0;
+        }
+        s.mean = s.count ? (sum / s.count) : 0.0;
+        s.variance = s.count
+                         ? (sum_sq / s.count) - (s.mean * s.mean)
+                         : 0.0;
+        return s;
+    }
 
-    // /**
-    //  * Input: Collection of Stats
-    //  *
-    //  * Output: None
-    //  *
-    //  * Purpose: Display the stats numerically, along with more stats from the DataMonitor
-    //  */
-    // void StatsRecord(Stats st)
-    // {
-    //     stats.Clear();
-    //     stats << "<h4>Point Stats</h4>"
-    //           << "<div>Count:    " << st.count << "</div>"
-    //           << "<div>Min:      " << st.min << "</div>"
-    //           << "<div>Max:      " << st.max << "</div>"
-    //           << "<div>Mean:     " << st.mean << "</div>"
-    //           << "<div>Variance: " << st.variance << "</div>";
-    // }
+    /**
+     * Input: Collection of Stats
+     *
+     * Output: None
+     *
+     * Purpose: Display the stats numerically, along with more stats from the DataMonitor
+     */
+    void StatsRecord(Stats st)
+    {
+        stats.Clear();
+        stats << "<h4>Point Stats</h4>"
+              << "<div>Count:    " << st.count << "</div>"
+              << "<div>Min:      " << st.min << "</div>"
+              << "<div>Max:      " << st.max << "</div>"
+              << "<div>Mean:     " << st.mean << "</div>"
+              << "<div>Variance: " << st.variance << "</div>";
+    }
 
-    // /**
-    //  * Input: None
-    //  *
-    //  * Output: None
-    //  *
-    //  * Purpose: Render a legend of task‐colors and the per‐tick solves
-    //  */
-    // void RecordTaskPanel()
-    // {
-    //     tasksDoc.Clear();
-    //     tasksDoc << "<div id='tasks-content'>";
-    //     auto tasks = world.GetTasks();
-    //     auto mons = world.GetSolveMonitors();
+    /**
+     * Input: None
+     *
+     * Output: None
+     *
+     * Purpose: Render a legend of task‐colors and the per‐tick solves
+     */
+    void RecordTaskPanel()
+    {
+        tasksDoc.Clear();
+        tasksDoc << "<div id='tasks-content'>";
+        auto tasks = world.GetTasks();
+        auto mons = world.GetSolveMonitors();
 
-    //     for (size_t i = 0; i < tasks.size(); ++i)
-    //     {
-    //         std::string swatch_color = emp::ColorHSV(TaskHue(i), 1.0, 1.0);
-    //         int solves = mons[i]->GetTotal();
-    //         tasksDoc << "<div class='task-entry'>"
-    //                  << "<span class='task-swatch' style='background:" << swatch_color << "'></span>"
-    //                  << tasks[i]->name()
-    //                  << " — Solves: " << solves
-    //                  << "</div>";
-    //     }
+        for (size_t i = 0; i < tasks.size(); ++i)
+        {
+            std::string swatch_color = emp::ColorHSV(TaskHue(i), 1.0, 1.0);
+            int solves = mons[i]->GetTotal();
+            tasksDoc << "<div class='task-entry'>"
+                     << "<span class='task-swatch' style='background:" << swatch_color << "'></span>"
+                     << tasks[i]->name()
+                     << " — Solves: " << solves
+                     << "</div>";
+        }
 
-    //     tasksDoc << "</div>";
-    // }
+        tasksDoc << "</div>";
+    }
 
-    // /**
-    //  * Input: A task id
-    //  *
-    //  * Output: A hue value for the task
-    //  *
-    //  * Purpose: Calculate the hue of the task based on its id and the global number of tasks.
-    //  */
-    // double TaskHue(size_t task_id)
-    // {
-    //     size_t N = world.GetTasks().size();
-    //     return 360.0 * double(task_id) / (N + 1);
-    // }
+    /**
+     * Input: A task id
+     *
+     * Output: A hue value for the task
+     *
+     * Purpose: Calculate the hue of the task based on its id and the global number of tasks.
+     */
+    double TaskHue(size_t task_id)
+    {
+        size_t N = world.GetTasks().size();
+        return 360.0 * double(task_id) / (N + 1);
+    }
 
     // /**
     //  * Input: A point value and the max points in the world
@@ -240,23 +240,25 @@ public:
     //     return std::clamp(brightness, 0.0, 1.0);
     // }
 
-    // /**
-    //  * Input: An organism and the current max points in the world
-    //  *
-    //  * Output: A string describing the color the organism should be
-    //  *
-    //  * Purpose: Calculate the color of the organism based on its best task done and points.
-    //  */
+    /**
+     * Input: An organism and the current max points in the world
+     *
+     * Output: A string describing the color the organism should be
+     *
+     * Purpose: Calculate the color of the organism based on its best task done and points.
+     */
     // std::string OrgColor(Organism &org, float max_pts)
-    // {
-    //     // basic stats
-    //     double pts = org.GetPoints();
-    //     size_t best = org.GetBestTask();
+    std::string OrgColor(Organism &org)
+    {
+        // basic stats
+        // double pts = org.GetPoints();
+        size_t best = org.GetBestTask();
 
-    //     // make color
-    //     std::string fill = emp::ColorHSV(TaskHue(best), 1.0, PtsBrightness(pts, max_pts));
-    //     return fill;
-    // }
+        // make color
+        // std::string fill = emp::ColorHSV(TaskHue(best), 1.0, PtsBrightness(pts, max_pts));
+        std::string fill = emp::ColorHSV(TaskHue(best), 1.0, 1.0);
+        return fill;
+    }
 
     /**
      * Input: None
@@ -270,9 +272,9 @@ public:
         canvas.Clear();
         world.Update();
 
-        // Stats st = ComputeStats();
-        // StatsRecord(st);
-        // RecordTaskPanel();
+        Stats st = ComputeStats();
+        StatsRecord(st);
+        RecordTaskPanel();
 
         int org_num = 0;
         for (int x = 0; x < num_w_boxes; x++)
@@ -286,18 +288,19 @@ public:
                 }
                 else
                 {
-                    std::string cell_color = "black";
                     Organism org = world.GetOrg(org_num);
-                    size_t best = org.GetBestTask();
-                    if (best != 0) {
-                        cell_color = "green";
-                        // std::cout << "Printing green arrow" << std::endl;
-                    }
+
+                    std::string cell_color = OrgColor(org);
+                    // size_t best = org.GetBestTask();
+                    // if (best != 0) {
+                    //     cell_color = "green";
+                    //     // std::cout << "Printing green arrow" << std::endl;
+                    // }
                     
-                    std::string arrow_color = "red";
+                    std::string arrow_color = "blue";
                     Cell* org_cell = org.GetCell();
-                    if (world.CellsAreFacing(org_cell, org_cell->GetFacingCell())){
-                        arrow_color = "yellow";
+                    if (org_cell->GetFacingCell()->GetFacingCell() == org_cell){
+                        arrow_color = "pink";
                     }
 
                     // const std::string fill = OrgColor(org, st.max);

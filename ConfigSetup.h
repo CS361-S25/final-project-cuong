@@ -9,7 +9,7 @@
 // Guide: https://anyaevostinar.github.io/classes/361-s25/config_intro
 EMP_BUILD_CONFIG(MyConfigType,
     VALUE(FILE_NAME, std::string, "_data.dat", "Root output file name"),
-    VALUE(SEED, int, 1, "What value should the random seed be?"), 
+    VALUE(SEED, int, 2, "What value should the random seed be?"), 
     VALUE(START_NUM, int, 1, "How many organisms should the world be populated with at first?"),
     VALUE(UPDATE_NUM, int, 3000000, "How many updates should be done for the world state?"),
     VALUE(UPDATE_RECORD_FREQUENCY, int, 50, "How many updates should be done between each datafile record entry?"),

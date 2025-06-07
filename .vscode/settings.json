@@ -94,5 +94,6 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "variant": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/home/ccuong/final-project-cuong/Empirical/third-party/Catch"
 }

@@ -43,6 +43,7 @@ public:
   */
   OrgWorld(emp::Random &_random) : emp::World<Organism>(_random) {
     AddTask(new Initial());
+    AddTask(new FaceAnother());
     AddTask(new SendHighest());
     SetupWorld();
     SetupCellGrid();
@@ -189,11 +190,6 @@ public:
       }
     }
   }
-
-  
-  bool CellsAreFacing(Cell* cell1, Cell* cell2){
-      return (cell1->GetFacingCell() == cell2 && cell2->GetFacingCell() == cell1);
-  }
   
   /**
    * Input: index of a known organism.
@@ -294,8 +290,8 @@ public:
       if (pts > 0.0) {
         // int completed_linear_index = state.cell->GetIndex();
         // Organism* achiever = pop[completed_linear_index];
-        std::cout << "Org at index " 
-        // << completed_linear_index 
+        std::cout << "Org" 
+        // << " at index" << completed_linear_index 
         << " Completed: " << tasks[i]->name() << " (+ " << pts << " points)\n";
         state.points += pts;
         RecordSolve(i);
@@ -326,7 +322,7 @@ public:
     // std::cout << "SendMessage 3" <<std::endl;
     int receiver_index = target_cell->GetIndex();
     // std::cout << "SendMessage 4" <<std::endl;
-    if (IsOccupied(receiver_index) && CellsAreFacing(sender_cell, target_cell)) {
+    if (IsOccupied(receiver_index) && target_cell->GetFacingCell() == sender_cell) {
     // std::cout << "SendMessage 5" <<std::endl;
       pop[receiver_index]->SetInbox(message);
     }
