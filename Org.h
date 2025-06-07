@@ -65,6 +65,10 @@ public:
     // std::cout << "Org at " << cpu.state.cell->GetIndex() << " has points: " <<  cpu.state.points <<std::endl;
     // std::cout << "Org Process 1" <<std::endl;
     cpu.state.current_location = current_location;
+    Cell* cur_cell = cpu.state.cell;
+    // Cell* tar_cell = cur_cell->GetFacingCell();
+    // std::cout << "Org at " << cur_cell->GetIndex() << " pointing at: " <<  tar_cell->GetIndex() <<std::endl;
+    // std::cout << "Org at " << tar_cell->GetIndex() << " pointing at: " <<  tar_cell->GetFacingCell()->GetIndex() <<std::endl;
     // std::cout << "Org Process 2" <<std::endl;
     // std::cout << "Organism at " << current_location.GetIndex() << " has " << cpu.state.points << " points." <<std::endl;
     // std::cout << "Org Process 3" <<std::endl;

@@ -286,15 +286,24 @@ public:
                 }
                 else
                 {
-                    auto &org = world.GetOrg(org_num);
+                    std::string cell_color = "black";
+                    Organism org = world.GetOrg(org_num);
+                    size_t best = org.GetBestTask();
+                    if (best != 0) {
+                        cell_color = "green";
+                        // std::cout << "Printing green arrow" << std::endl;
+                    }
+                    
+                    std::string arrow_color = "red";
+                    Cell* org_cell = org.GetCell();
+                    if (world.CellsAreFacing(org_cell, org_cell->GetFacingCell())){
+                        arrow_color = "yellow";
+                    }
+
                     // const std::string fill = OrgColor(org, st.max);
                     canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE,
-                                "black", "black");
+                                cell_color, "black");
                     
-                    size_t best = org.GetBestTask();
-                    std::string arrow_color = "red";
-                    if (best == 1) {arrow_color = "green";}
-
                     Cell* C = world.GetCellByLinearIndex(org_num);
                     int dir  = C->GetFacing();
                     double cx = x * RECT_SIDE + (RECT_SIDE / 2.0);
@@ -318,9 +327,15 @@ public:
 
                     canvas.Line(ex, ey, x1, y1, arrow_color, 2);
                     canvas.Line(ex, ey, x2, y2, arrow_color, 2);
+
+                    // if (best != 0) {
+                    //     std::cout << "Printed green arrow" << std::endl;
+                    //     exit(0);
+                    // }
                 }
                 
                 org_num++;
+                
             }
         }
     }

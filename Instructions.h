@@ -139,13 +139,12 @@ struct SendMessage {
         // std::cout << "Instruction SendMessage 0" <<std::endl;
         emp::WorldPosition loc = state.current_location;
         // std::cout << "Instruction SendMessage 1" <<std::endl;
-        int dir = emp::Mod(static_cast<int>(core.registers[inst.args[1]]) , 8);
         // std::cout << "Instruction SendMessage 2" <<std::endl;
         unsigned int message = core.registers[inst.args[0]];
         // std::cout << "Instruction SendMessage 3" <<std::endl;
         state.message = message;
         // std::cout << "Instruction SendMessage 4" <<std::endl;
-        state.world->SendMessage(loc.GetIndex(), dir, state.message);
+        state.world->SendMessage(loc.GetIndex(), state.message);
         // std::cout << "Instruction SendMessage 5" <<std::endl;
     }
 

@@ -17,6 +17,7 @@ class OrgWorld : public emp::World<Organism>
   std::vector<int> solve_counts;
   const int num_h_boxes = worldConfig.WORLD_LEN();
   const int num_w_boxes = worldConfig.WORLD_WIDTH();
+  emp::Random random{ worldConfig.SEED() };
 
   std::vector<std::vector<Cell*>> cell_grid = std::vector<std::vector<Cell*>>( num_w_boxes, std::vector<Cell*>(num_h_boxes) );
   // direction‐vectors for 8 neighbors:
@@ -164,6 +165,8 @@ public:
             {
                 Cell* new_cell = new Cell();
                 new_cell->SetIndex(org_num);
+                int random_dir = static_cast<int>( random.GetUInt(8) );
+                new_cell->SetFacing(random_dir);
                 // std::cout << "Made cell index " << org_num <<std::endl;
                 cell_grid[x][y] = new_cell;
                 // std::cout << cell_grid[x][y]->GetIndex() << std::endl;
@@ -185,6 +188,11 @@ public:
         }
       }
     }
+  }
+
+  
+  bool CellsAreFacing(Cell* cell1, Cell* cell2){
+      return (cell1->GetFacingCell() == cell2 && cell2->GetFacingCell() == cell1);
   }
   
   /**
@@ -305,7 +313,7 @@ public:
     reproduce_queue.push_back(location);
   }
 
-  void SendMessage(int location, int dir, int message) {
+  void SendMessage(int location, int message) {
     // std::cout << "SendMessage 0" <<std::endl;
     Organism* sender = pop[location];
     // std::cout << "SendMessage 1" <<std::endl;
@@ -314,11 +322,11 @@ public:
     Cell* sender_cell = sender->GetCell();
     // std::cout << "SendMessage 2" <<std::endl;
     // std::cout << "sender index: "  << sender_cell->GetIndex() <<std::endl;
-    Cell* target_cell = sender_cell->GetConnection(dir);
+    Cell* target_cell = sender_cell->GetFacingCell();
     // std::cout << "SendMessage 3" <<std::endl;
     int receiver_index = target_cell->GetIndex();
     // std::cout << "SendMessage 4" <<std::endl;
-    if (IsOccupied(receiver_index)) {
+    if (IsOccupied(receiver_index) && CellsAreFacing(sender_cell, target_cell)) {
     // std::cout << "SendMessage 5" <<std::endl;
       pop[receiver_index]->SetInbox(message);
     }

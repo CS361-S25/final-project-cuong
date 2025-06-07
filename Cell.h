@@ -44,6 +44,7 @@ public:
         return connections[dir]; 
     }
     void SetConnection(int dir, Cell *new_connection) { connections[dir] = new_connection; }
+    Cell *GetFacingCell() {return GetConnection(GetFacing());}
 };
 
 #endif
