@@ -39,9 +39,8 @@ class AEAnimator : public emp::web::Animate
     const double RECT_SIDE = worldConfig.CELL_SIZE();
     const double width{num_w_boxes * RECT_SIDE};
     const double height{num_h_boxes * RECT_SIDE};
-    static constexpr double dir_dx[8] = {  0,  1,  1,  1,  0,  -1, -1, -1 };
-    static constexpr double dir_dy[8] = { -1, -1,  0,  1,  1,   1,  0, -1 };
-    
+    static constexpr double dir_dx[8] = {0, 1, 1, 1, 0, -1, -1, -1};
+    static constexpr double dir_dy[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
     emp::Random random{worldConfig.SEED()};
     OrgWorld world{random};
@@ -218,8 +217,11 @@ public:
      */
     double TaskHue(size_t task_id)
     {
-        size_t N = world.GetTasks().size();
-        return 360.0 * double(task_id) / (N + 1);
+        const size_t N = world.GetTasks().size();
+        const size_t M = N * 2; 
+        const size_t slot = 2 * task_id + 1; 
+
+        return 360.0 * double(slot) / double(M);
     }
 
     // /**
@@ -296,19 +298,19 @@ public:
                     //     cell_color = "green";
                     //     // std::cout << "Printing green arrow" << std::endl;
                     // }
-                    
-                    std::string arrow_color = "blue";
-                    Cell* org_cell = org.GetCell();
-                    if (org_cell->GetFacingCell()->GetFacingCell() == org_cell){
-                        arrow_color = "pink";
-                    }
+
+                    std::string arrow_color = "black";
+                    // Cell* org_cell = org.GetCell();
+                    // if (org_cell->GetFacingCell()->GetFacingCell() == org_cell){
+                    //     arrow_color = "pink";
+                    // }
 
                     // const std::string fill = OrgColor(org, st.max);
                     canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE,
                                 cell_color, "black");
-                    
-                    Cell* C = world.GetCellByLinearIndex(org_num);
-                    int dir  = C->GetFacing();
+
+                    Cell *C = world.GetCellByLinearIndex(org_num);
+                    int dir = C->GetFacing();
                     double cx = x * RECT_SIDE + (RECT_SIDE / 2.0);
                     double cy = y * RECT_SIDE + (RECT_SIDE / 2.0);
 
@@ -318,27 +320,26 @@ public:
 
                     canvas.Line(cx, cy, ex, ey, arrow_color, 2);
 
-                    double arrowSize = 0.15 * RECT_SIDE;
-                    double angle = std::atan2(dir_dy[dir], dir_dx[dir]);
-                    double wing1 = angle +  M_PI/6.0; // +30° in radians
-                    double wing2 = angle -  M_PI/6.0; // –30° in radians
+                    // double arrowSize = 0.15 * RECT_SIDE;
+                    // double angle = std::atan2(dir_dy[dir], dir_dx[dir]);
+                    // double wing1 = angle + M_PI / 6.0; // +30° in radians
+                    // double wing2 = angle - M_PI / 6.0; // –30° in radians
 
-                    double x1 = ex - arrowSize * std::cos(wing1);
-                    double y1 = ey - arrowSize * std::sin(wing1);
-                    double x2 = ex - arrowSize * std::cos(wing2);
-                    double y2 = ey - arrowSize * std::sin(wing2);
+                    // double x1 = ex - arrowSize * std::cos(wing1);
+                    // double y1 = ey - arrowSize * std::sin(wing1);
+                    // double x2 = ex - arrowSize * std::cos(wing2);
+                    // double y2 = ey - arrowSize * std::sin(wing2);
 
-                    canvas.Line(ex, ey, x1, y1, arrow_color, 2);
-                    canvas.Line(ex, ey, x2, y2, arrow_color, 2);
+                    // canvas.Line(ex, ey, x1, y1, arrow_color, 2);
+                    // canvas.Line(ex, ey, x2, y2, arrow_color, 2);
 
                     // if (best != 0) {
                     //     std::cout << "Printed green arrow" << std::endl;
                     //     exit(0);
                     // }
                 }
-                
+
                 org_num++;
-                
             }
         }
     }

@@ -16,13 +16,15 @@ class Cell
     int linear_index;
     std::vector<Cell *> connections;
     int facing;
+    bool has_org;
 
 public:
     Cell(const MyConfigType &cfg = worldConfig) : 
     config(cfg), random(cfg.SEED()), 
     id(random.GetUInt()), 
     linear_index(0),
-    connections(std::vector<Cell *>(8))
+    connections(std::vector<Cell *>(8)),
+    has_org(false)
     {
         facing = static_cast<int>(random.GetUInt(8));
     }
@@ -45,6 +47,9 @@ public:
     }
     void SetConnection(int dir, Cell *new_connection) { connections[dir] = new_connection; }
     Cell *GetFacingCell() {return GetConnection(GetFacing());}
+
+    bool GetHasOrg(){return has_org;}
+    void SetHasOrg(bool state){has_org = state;}
 };
 
 #endif

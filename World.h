@@ -1,3 +1,4 @@
+// World.h
 #ifndef WORLD_H
 #define WORLD_H
 
@@ -43,7 +44,10 @@ public:
   */
   OrgWorld(emp::Random &_random) : emp::World<Organism>(_random) {
     AddTask(new Initial());
+    AddTask(new TargetAnother());
+    AddTask(new PrepMessage());
     AddTask(new FaceAnother());
+    AddTask(new PrepHighest());
     AddTask(new SendHighest());
     SetupWorld();
     SetupCellGrid();
@@ -249,7 +253,9 @@ public:
     for(int i = 0; i < GetSize(); i++){
       if (!IsOccupied(i))
         continue;
-      pop[i]->SetCell(GetCellByLinearIndex(i));
+      Cell* cur_cell = GetCellByLinearIndex(i);
+      pop[i]->SetCell(cur_cell);
+      cur_cell->SetHasOrg(true);
     }
   }
   
@@ -290,9 +296,9 @@ public:
       if (pts > 0.0) {
         // int completed_linear_index = state.cell->GetIndex();
         // Organism* achiever = pop[completed_linear_index];
-        std::cout << "Org" 
+        // std::cout << "Org" 
         // << " at index" << completed_linear_index 
-        << " Completed: " << tasks[i]->name() << " (+ " << pts << " points)\n";
+        // << " Completed: " << tasks[i]->name() << " (+ " << pts << " points)\n";
         state.points += pts;
         RecordSolve(i);
         state.best_task = std::max(state.best_task, i);

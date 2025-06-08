@@ -44,6 +44,25 @@ class Initial : public Task {
 
   
 // Task: returns the highest value between received cell ID and org's cell's cell ID
+class TargetAnother : public Task {
+public:
+  double CheckOutput(OrgState &state) override {
+    // std::cout << "CheckOutput FaceAnother 0" <<std::endl;
+    Cell* cur_cell = state.cell;
+    Cell* tar_cell = cur_cell->GetFacingCell();
+    // std::cout << (tar_cell->GetFacingCell() == cur_cell) <<std::endl;
+    if (tar_cell->GetHasOrg()) {
+      return 1.0;
+    }
+    else {
+      return 0.0;
+    }
+  }
+  std::string name() const override { return "Target Another Organism"; }
+};
+
+  
+// Task: returns the highest value between received cell ID and org's cell's cell ID
 class FaceAnother : public Task {
 public:
   double CheckOutput(OrgState &state) override {
@@ -51,15 +70,58 @@ public:
     Cell* cur_cell = state.cell;
     Cell* tar_cell = cur_cell->GetFacingCell();
     // std::cout << (tar_cell->GetFacingCell() == cur_cell) <<std::endl;
-    if ( tar_cell->GetFacingCell() == cur_cell ) {
-      return 1.0;
+    if (tar_cell->GetHasOrg() && tar_cell->GetFacingCell() == cur_cell ) {
+      return 3.0;
     }
     else {
       return 0.0;
     }
   }
-  std::string name() const override { return "Face Another Cell"; }
+  std::string name() const override { return "Face Another Organism"; }
 };
+
+// Task: returns the highest value between received cell ID and org's cell's cell ID
+class PrepMessage : public Task {
+public:
+  double CheckOutput(OrgState &state) override {
+
+    if (state.message > 0) {
+      return 5.0;
+    }
+    else {
+      return 0.0;
+    }
+  }
+  std::string name() const override { return "Prepare Message"; }
+};
+
+
+
+// Task: returns the highest value between received cell ID and org's cell's cell ID
+class PrepHighest : public Task {
+public:
+  double CheckOutput(OrgState &state) override {
+    // std::cout << "CheckOutput SendHighest 0" <<std::endl;
+    // std::cout << "Checking output of organism index: " << state.cell->GetIndex() <<std::endl;
+    // std::cout << "CheckOutput SendHighest 1" <<std::endl;
+    Cell* cur_cell = state.cell;
+    Cell* tar_cell = cur_cell->GetFacingCell();
+    unsigned int cell_id  = cur_cell->GetID();
+    // std::cout << "CheckOutput SendHighest 2" <<std::endl;
+    unsigned int retrieved = state.retrieved;
+
+    unsigned int max_val = std::max(cell_id, retrieved);
+
+    if (state.message == max_val) {
+      return 10.0;
+    }
+    else {
+      return 0.0;
+    }
+  }
+  std::string name() const override { return "Prepare Highest Value"; }
+};
+
 
 // Task: returns the highest value between received cell ID and org's cell's cell ID
 class SendHighest : public Task {
@@ -68,14 +130,16 @@ public:
     // std::cout << "CheckOutput SendHighest 0" <<std::endl;
     // std::cout << "Checking output of organism index: " << state.cell->GetIndex() <<std::endl;
     // std::cout << "CheckOutput SendHighest 1" <<std::endl;
-    unsigned int cell_id  = state.cell->GetID();
+    Cell* cur_cell = state.cell;
+    Cell* tar_cell = cur_cell->GetFacingCell();
+    unsigned int cell_id  = cur_cell->GetID();
     // std::cout << "CheckOutput SendHighest 2" <<std::endl;
     unsigned int retrieved = state.retrieved;
 
     unsigned int max_val = std::max(cell_id, retrieved);
 
-    if ( state.message == max_val ) {
-      return 10.0;
+    if (tar_cell->GetHasOrg() && tar_cell->GetFacingCell() == cur_cell && state.message == max_val ) {
+      return 30.0;
     }
     else {
       return 0.0;
