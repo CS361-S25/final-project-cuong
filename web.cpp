@@ -1,6 +1,7 @@
 #define UIT_VENDORIZE_EMP
 #define UIT_SUPPRESS_MACRO_INSEEP_WARNINGS
 
+#include <deque>
 #include "emp/math/Random.hpp"
 #include "emp/math/math.hpp"
 #include "emp/web/Animate.hpp"
@@ -18,6 +19,7 @@ emp::web::Document doc("target");
 emp::web::Document settings("settings");
 emp::web::Document stats("stats");
 emp::web::Document tasksDoc("tasks");
+emp::web::Document cellsDoc("cells");
 // Your configuration object needs to exist outside of the animator class
 MyConfigType worldConfig;
 
@@ -41,11 +43,15 @@ class AEAnimator : public emp::web::Animate
     const double height{num_h_boxes * RECT_SIDE};
     static constexpr double dir_dx[8] = {0, 1, 1, 1, 0, -1, -1, -1};
     static constexpr double dir_dy[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
+    unsigned int max_known_id;
+    unsigned int min_known_id;
+    long long cycle = 0;
 
     emp::Random random{worldConfig.SEED()};
     OrgWorld world{random};
 
     emp::web::Canvas canvas{width, height, "canvas"};
+    emp::web::Canvas histCanvas{width, 100, "histCanvas"};
 
 public:
     // Constructor
@@ -68,6 +74,7 @@ public:
         // shove canvas into the div
         // along with a control button
         doc << canvas;
+        doc << histCanvas;
         doc << GetToggleButton("Toggle");
         doc << GetStepButton("Step");
     }
@@ -124,6 +131,100 @@ public:
         }
     }
 
+    void DrawMessageHistogram(
+        emp::web::Canvas &C,
+        const emp::DataMonitor<double, emp::data::Histogram> &hist,
+        double y0,
+        const std::string &fill = "steelblue")
+    {
+        // 1) grab the bin‐counts vector
+        const auto &counts = hist.GetHistCounts();
+        const int bins = (int)counts.size();
+        const double bar_w = width / double(bins);
+
+        // 2) find the max so we can scale heights
+        size_t max_count = 0;
+        for (size_t c : counts)
+            max_count = std::max(max_count, c);
+
+        // 3) draw each bar
+        for (int b = 0; b < bins; ++b)
+        {
+            size_t cnt = counts[b];
+            double bar_h = max_count
+                               ? (double(cnt) / double(max_count) * 80.0)
+                               : 0.0;
+            double x = b * bar_w;
+            double y = y0 + (100.0 - bar_h);
+            C.Rect(x, y, bar_w - 1, bar_h, fill, "black");
+        }
+    }
+
+    void DrawMessageTimeSeries(
+        emp::web::Canvas &C,
+        const std::deque<std::vector<size_t>> &history,
+        double y0,
+        const std::string &color)
+    {
+        if (history.empty())
+            return;
+
+        if (history.size() == 1)
+        {
+            const auto &frame = history.front();
+            for (size_t b = 0; b < frame.size(); ++b)
+            {
+                double x = (b + 0.5) * (width / double(frame.size()));
+                double y = y0 + 100.0 / 2; // middle of the 100px canvas
+                C.Circle(x, y, 3, color, "none");
+            }
+            return;
+        }
+
+        const size_t T = history.size();         // number of time‐points
+        const size_t B = history.front().size(); // number of bins
+        if (!T || !B)
+            return;
+
+        // find the absolute maximum in the entire window to scale all lines equally
+        size_t global_max = 1;
+        for (auto &frame : history)
+            for (size_t c : frame)
+                global_max = std::max(global_max, c);
+
+        // horizontal spacing per time‐step
+        double dx = width / double(T - 1);
+
+        // vertical chart height (leave 10px top/bottom margin in 100px total)
+        double chart_h = 80.0;
+        double y_base = y0 + (100.0 - chart_h);
+
+        // for **each** bin, draw its polyline
+        for (size_t b = 0; b < B; ++b)
+        {
+            // choose a distinguishable color per bin (or all same)
+            // here we just slightly vary opacity
+            std::string col = color;
+            // e.g. "rgba(0,128,0,0.3)" for green series, etc.
+
+            // walk through time-points
+            for (size_t t = 0; t + 1 < T; ++t)
+            {
+                double x1 = t * dx;
+                double x2 = (t + 1) * dx;
+                double v1 = double(history[t][b]) / double(global_max);
+                double v2 = double(history[t + 1][b]) / double(global_max);
+                double y1 = y_base + (1.0 - v1) * chart_h;
+                double y2 = y_base + (1.0 - v2) * chart_h;
+                C.Line(x1, y1, x2, y2, col, 1);
+            }
+        }
+    }
+
+    static constexpr size_t MAX_HISTORY = 200;
+    std::deque<std::vector<size_t>> send_history;
+    std::deque<std::vector<size_t>> recv_history;
+
     /**
      * Input: None
      *
@@ -145,11 +246,16 @@ public:
                 continue;
             double p = world.GetOrg(i).GetPoints();
             s.max = std::max(s.max, p);
+            // if (s.max == p)
+            // {
+            //     std::cout << "New max: " << p << " from index " << i << std::endl;
+            // }
             s.min = std::min(s.min, p);
             sum += p;
             sum_sq += p * p;
             ++s.count;
         }
+        // std::cout << "Done one update's ComputeStats() for " << s.count << " orgs " << std::endl;
         if (s.count == 0)
         {
             s.min = 0.0;
@@ -159,6 +265,7 @@ public:
         s.variance = s.count
                          ? (sum_sq / s.count) - (s.mean * s.mean)
                          : 0.0;
+
         return s;
     }
 
@@ -208,6 +315,44 @@ public:
         tasksDoc << "</div>";
     }
 
+    void RecordCellPanel()
+    {
+        cellsDoc.Clear();
+        cellsDoc << "<h4>Cell ID Sent / Received</h4>";
+
+        auto sendMons = world.GetSendMonitors();
+        auto recvMons = world.GetRecvMonitors();
+        auto sendOtherMon = world.GetSendOtherMon(); 
+        auto recvOtherMon = world.GetRecvOtherMon();
+        const int total = num_w_boxes * num_h_boxes;
+
+        for (int i = 0; i < total; i++)
+        {
+            int sends = sendMons[i]->GetTotal();
+            int recvs = recvMons[i]->GetTotal();
+
+            if (sends == 0 && recvs == 0) 
+            continue;
+
+            unsigned int cell_id = world.GetCellByLinearIndex(i)->GetID();
+            cellsDoc << "<div class='cell-entry'>"
+                    << "Cell " << cell_id
+                    << " — Sent: " << sends
+                    << ", Received: " << recvs
+                    << "</div>";
+           
+        }
+        int oSends = sendOtherMon->GetTotal();
+        int oRecvs = recvOtherMon->GetTotal();
+        if (oSends != 0 || oRecvs != 0) {
+                cellsDoc << "<div class='non-cell-entry'>"
+                        << "Non ID " << " value"
+                        << " — Sent: " << oSends
+                        << ", Received: " << oRecvs
+                        << "</div>";
+            }
+    }
+
     /**
      * Input: A task id
      *
@@ -218,29 +363,53 @@ public:
     double TaskHue(size_t task_id)
     {
         const size_t N = world.GetTasks().size();
-        const size_t M = N * 2; 
-        const size_t slot = 2 * task_id + 1; 
+        const size_t M = N * 2;
+        const size_t slot = 2 * task_id + 1;
+        // make color
+        /**
+         * |        Color | Hue (°) | `emp::ColorHSV(hue,1.0,1.0)`     |
+           | -----------: | ------: | -------------------------------- |
+           |          Red |       0 | `emp::ColorHSV(  0.0, 1.0, 1.0)` |
+           |       Orange |      30 | `emp::ColorHSV( 30.0, 1.0, 1.0)` |
+           |       Yellow |      60 | `emp::ColorHSV( 60.0, 1.0, 1.0)` |
+           |   Chartreuse |      90 | `emp::ColorHSV( 90.0, 1.0, 1.0)` |
+           |        Green |     120 | `emp::ColorHSV(120.0, 1.0, 1.0)` |
+           | Spring Green |     150 | `emp::ColorHSV(150.0, 1.0, 1.0)` |
+           |         Cyan |     180 | `emp::ColorHSV(180.0, 1.0, 1.0)` |
+           |        Azure |     210 | `emp::ColorHSV(210.0, 1.0, 1.0)` |
+           |         Blue |     240 | `emp::ColorHSV(240.0, 1.0, 1.0)` |
+           |       Violet |     270 | `emp::ColorHSV(270.0, 1.0, 1.0)` |
+           |      Magenta |     300 | `emp::ColorHSV(300.0, 1.0, 1.0)` |
+           |         Rose |     330 | `emp::ColorHSV(330.0, 1.0, 1.0)` |
 
+         */
         return 360.0 * double(slot) / double(M);
     }
 
-    // /**
-    //  * Input: A point value and the max points in the world
-    //  *
-    //  * Output: A brightness value between 0 and 1
-    //  *
-    //  * Purpose: Calculate the brightness of the organism based on its points relative to the max point in the world.
-    //  */
-    // double PtsBrightness(double pts, double max_pts)
-    // {
-    //     double minB = worldConfig.MIN_BRIGHT();
-    //     double maxB = worldConfig.MAX_BRIGHT();
-    //     double ratio_pts = (max_pts > 0)
-    //                            ? std::clamp(pts / max_pts, 0.0, 1.0)
-    //                            : 0.0;
-    //     double brightness = minB + ratio_pts * (maxB - minB);
-    //     return std::clamp(brightness, 0.0, 1.0);
-    // }
+    /**
+     * Input: Current id an organism wwill send if it do so
+     *
+     * Output: A brightness value between 0 and 1
+     *
+     * Purpose: Calculate the brightness of the organism based on its message id relative to the max id known in the world.
+     */
+    double OrgBrightness(unsigned int cur_id)
+    {
+        const unsigned int id_min = min_known_id;
+        const unsigned int id_max = max_known_id;
+
+        const double bright_min = worldConfig.MIN_BRIGHT();
+        const double bright_max = worldConfig.MAX_BRIGHT();
+
+        if (id_max <= id_min)
+            return bright_max;
+
+        double ratio = (static_cast<double>(cur_id) - id_min) / static_cast<double>(id_max - id_min);
+
+        ratio = std::clamp(ratio, 0.0, 1.0);
+
+        return bright_min + ratio * (bright_max - bright_min);
+    }
 
     /**
      * Input: An organism and the current max points in the world
@@ -253,13 +422,57 @@ public:
     std::string OrgColor(Organism &org)
     {
         // basic stats
+        Cell *cur_cell = org.GetCell();
+        unsigned int cur_id = cur_cell->GetID();
+        unsigned int cur_message = org.GetMessage();
         // double pts = org.GetPoints();
         size_t best = org.GetBestTask();
 
-        // make color
-        // std::string fill = emp::ColorHSV(TaskHue(best), 1.0, PtsBrightness(pts, max_pts));
-        std::string fill = emp::ColorHSV(TaskHue(best), 1.0, 1.0);
+        double brightness = OrgBrightness(cur_id);
+        std::string fill;
+        if ((cur_message && cur_message == max_known_id) || cur_id == max_known_id)
+        {
+            // std::cout << "Special color used" << std::endl;
+            fill = emp::ColorHSV(0, 1.0, brightness);
+        }
+        else
+        {
+            fill = emp::ColorHSV(TaskHue(best), 1.0, 1.0);
+        }
         return fill;
+    }
+
+    void GetKnownIDRange()
+    {
+        int org_num = 0;
+        for (int x = 0; x < num_w_boxes; x++)
+        {
+            for (int y = 0; y < num_h_boxes; y++)
+            {
+                if (world.IsOccupied(org_num))
+                {
+                    unsigned int new_id = world.GetCellByGridCoord(x, y)->GetID();
+                    if (max_known_id)
+                    {
+                        max_known_id = std::max(max_known_id, new_id);
+                    }
+                    else
+                    {
+                        max_known_id = new_id;
+                    }
+
+                    if (min_known_id)
+                    {
+                        min_known_id = std::min(min_known_id, new_id);
+                    }
+                    else
+                    {
+                        min_known_id = new_id;
+                    }
+                }
+                org_num++;
+            }
+        }
     }
 
     /**
@@ -277,6 +490,18 @@ public:
         Stats st = ComputeStats();
         StatsRecord(st);
         RecordTaskPanel();
+        RecordCellPanel();
+
+        if (st.count < num_h_boxes * num_w_boxes)
+        {
+            GetKnownIDRange();
+        }
+        else
+        {
+            max_known_id = world.GetMaxID();
+            min_known_id = world.GetMinID();
+        }
+        // std::cout << "Max Known ID: " << max_known_id << std::endl;
 
         int org_num = 0;
         for (int x = 0; x < num_w_boxes; x++)
@@ -291,6 +516,7 @@ public:
                 else
                 {
                     Organism org = world.GetOrg(org_num);
+                    Cell *cur_cell = world.GetCellByGridCoord(x, y);
 
                     std::string cell_color = OrgColor(org);
                     // size_t best = org.GetBestTask();
@@ -298,6 +524,13 @@ public:
                     //     cell_color = "green";
                     //     // std::cout << "Printing green arrow" << std::endl;
                     // }
+
+                    std::string isMax = "";
+                    if (cur_cell->GetID() == max_known_id)
+                    {
+                        isMax = " MAX ";
+                    }
+                    // std::cout << "ID of " << org_num << " : " << cur_cell->GetID() << isMax << std::endl;
 
                     std::string arrow_color = "black";
                     // Cell* org_cell = org.GetCell();
@@ -342,6 +575,17 @@ public:
                 org_num++;
             }
         }
+        // Clear and redraw the histogram canvas:
+        histCanvas.Clear();
+
+        // top half: sends (green)
+        DrawMessageTimeSeries(histCanvas, send_history, 0, "rgba(0,200,0,0.4)");
+
+        // bottom half: receives (red)
+        DrawMessageTimeSeries(histCanvas, recv_history, 50, "rgba(200,0,0,0.4)");
+    
+        std::cout << "Cycle: " << cycle << std::endl;
+        cycle = cycle + 1;
     }
 };
 

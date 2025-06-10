@@ -21,14 +21,16 @@ class Cell
 public:
     Cell(const MyConfigType &cfg = worldConfig) : 
     config(cfg), random(cfg.SEED()), 
-    id(random.GetUInt()), 
+    id(0), 
     linear_index(0),
     connections(std::vector<Cell *>(8)),
-    has_org(false)
+    has_org(false),
+    facing(0)
     {
-        facing = static_cast<int>(random.GetUInt(8));
+        ;
     }
 
+    void SetID(unsigned int new_id) {id = new_id;}
     unsigned int GetID() { return id; }
     int GetIndex() { 
         return linear_index; 

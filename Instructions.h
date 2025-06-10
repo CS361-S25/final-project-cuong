@@ -18,24 +18,24 @@
  * solution to a task, and then gets a new input value and stores it in the same
  * register.
  */
-struct IOInstruction
-{
-  template <typename Spec>
-  static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
-                  const sgpl::Program<Spec> &,
-                  typename Spec::peripheral_t &state) noexcept
-  {
-    // uint32_t output = core.registers[inst.args[0]];
-    state.world->CheckOutput(state);
+// struct IOInstruction
+// {
+//   template <typename Spec>
+//   static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
+//                   const sgpl::Program<Spec> &,
+//                   typename Spec::peripheral_t &state) noexcept
+//   {
+//     // uint32_t output = core.registers[inst.args[0]];
+//     state.world->CheckOutput(state);
 
-    uint32_t input = sgpl::tlrand.Get().GetUInt();
-    core.registers[inst.args[0]] = input;
-    state.add_input(input);
-  }
+//     uint32_t input = sgpl::tlrand.Get().GetUInt();
+//     core.registers[inst.args[0]] = input;
+//     // state.add_input(input);
+//   }
 
-  static std::string name() { return "IO"; }
-  static size_t prevalence() { return 1; }
-};
+//   static std::string name() { return "IO"; }
+//   static size_t prevalence() { return 1; }
+// };
 
 struct NandInstruction
 {
@@ -69,7 +69,7 @@ struct ReproduceInstruction
     {
       // std::cout << "Org at " << state.cell->GetIndex() << " can reproduce" << std::endl;
       state.world->ReproduceOrg(state.current_location);
-      state.points = 0;
+      state.points -= 0;
     }
   }
 
@@ -144,8 +144,12 @@ struct SendMessage {
         // std::cout << "Instruction SendMessage 3" <<std::endl;
         state.message = message;
         // std::cout << "Instruction SendMessage 4" <<std::endl;
-        state.world->SendMessage(loc.GetIndex(), state.message);
+        // Cell* cur_cell = state.cell;
+        // Cell* tar_cell = cur_cell->GetFacingCell();
+        int sent = state.world->SendMessage(loc.GetIndex(), state.message);
         // std::cout << "Instruction SendMessage 5" <<std::endl;
+        if (sent){state.world->CheckOutput(state);}
+        core.registers[inst.args[0]] =  sgpl::tlrand.Get().GetUInt();
     }
 
     static std::string name() { return "SendMessage"; } 
@@ -157,12 +161,12 @@ struct RetrieveMessage {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
-        // std::cout << "Instruction RetrieveMessage 0" <<std::endl;
-        // std::cout << state.inbox <<std::endl;
-        // std::cout << "Instruction RetrieveMessage 1" <<std::endl;
-        state.retrieved = state.inbox;
-        // std::cout << "Instruction RetrieveMessage 2" <<std::endl;
-        core.registers[inst.args[0]] = state.retrieved;
+        emp::WorldPosition loc = state.current_location;
+        if (state.inbox) {
+          state.world->RetrieveMessage(loc.GetIndex(), state.inbox);
+          core.registers[inst.args[0]] = state.retrieved;
+        }
+        
         
     }
 
@@ -213,7 +217,8 @@ using Library =
                            sgpl::RandomBool,
                            sgpl::RandomDraw,
                            sgpl::Terminal, 
-                           IOInstruction, NandInstruction,
+                          //  IOInstruction, 
+                           NandInstruction,
                            ReproduceInstruction,
                            GetFacing, RotateLeft, RotateRight, GetID, SendMessage, RetrieveMessage>;
 

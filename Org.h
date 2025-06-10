@@ -1,7 +1,7 @@
 #ifndef ORG_H
 #define ORG_H
 
-
+#include <cmath>
 #include "CPU.h"
 #include "OrgState.h"
 #include "Cell.h"
@@ -14,7 +14,7 @@ class Organism {
 
 public:
 
-  Organism(emp::Ptr<OrgWorld> world, const MyConfigType& cfg = worldConfig, double points = 0.0) : cpu(world), config(cfg) {
+  Organism(emp::Ptr<OrgWorld> world, const MyConfigType& cfg = worldConfig, double points = 30.0) : cpu(world), config(cfg) {
     SetPoints(points);
   }
 
@@ -26,6 +26,11 @@ public:
   size_t GetBestTask() { return cpu.state.best_task; }
 
   emp::WorldPosition GetLocation(){return cpu.state.current_location;}
+
+
+  void AddReproduced(int inc){cpu.state.reproduced += inc;}
+  void SetReproduced(int new_rep){cpu.state.reproduced = new_rep;}
+  int GetReproduced(){return cpu.state.reproduced;}
  
   void SetCell(Cell* new_cell) {cpu.state.cell = new_cell;}
   Cell* GetCell() {return cpu.state.cell;}
@@ -37,7 +42,17 @@ public:
   
   void SetInbox(unsigned int new_inbox) {cpu.state.inbox = new_inbox;}
   unsigned int GetInbox() {return cpu.state.inbox;}
+
+  void SetRetrieved(unsigned int new_retrieved) {cpu.state.retrieved = new_retrieved;}
+  unsigned int GetRetrieved() {return cpu.state.retrieved;}
+
+  void AddRetrievedValue(unsigned int new_retrieved_value) {cpu.state.retrieved_values.insert(new_retrieved_value);}
+  void SetRetrievedValues(std::unordered_set<unsigned int> new_retrieved_values) {cpu.state.retrieved_values = new_retrieved_values;}
+  std::unordered_set<unsigned int> GetRetrievedValues() {return cpu.state.retrieved_values;}
   
+  void SetMaxKnown(unsigned int new_max_known) {cpu.state.max_known = new_max_known;}
+  unsigned int GetMaxKnown() {return cpu.state.max_known;}
+
   void Reset() { cpu.Reset(); }
   void Mutate() { cpu.Mutate(); }
 
@@ -61,7 +76,8 @@ public:
   void Process(emp::WorldPosition current_location) {
     // std::cout << "Org Process 0" <<std::endl;
     //cpu.state.task_done = false;
-    AddPoints(1.0);
+    if (GetReproduced() < 2) {AddPoints(1.0);}
+    // AddPoints(1.0);
     // std::cout << "Org at " << cpu.state.cell->GetIndex() << " has points: " <<  cpu.state.points <<std::endl;
     // std::cout << "Org Process 1" <<std::endl;
     cpu.state.current_location = current_location;
@@ -75,6 +91,8 @@ public:
     cpu.RunCPUStep(10);
     // std::cout << "Org Process 4" <<std::endl;
     cpu.state.age++;
+    double penalty = std::log10( static_cast<double>(cpu.state.age) + 1.0 ) - 1;
+    // AddPoints( -penalty );
   }
 
   /**
