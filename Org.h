@@ -18,7 +18,7 @@ public:
     SetPoints(points);
   }
 
-  // Basic data processing
+  // Local variables data processing
   void SetPoints(double _in) { cpu.state.points = _in; }
   void AddPoints(double _in) { cpu.state.points += _in; }
   double GetPoints() { return cpu.state.points; }
@@ -71,27 +71,16 @@ public:
    *
    * Output: None
    *
-   * Purpose: Saves the information in the CPU, run the CPU for some cycles, and age up the organism.
+   * Purpose: Add initial points boost, saves the information in the CPU, run the CPU for some cycles, and age up the organism.
    */
   void Process(emp::WorldPosition current_location) {
-    // std::cout << "Org Process 0" <<std::endl;
-    //cpu.state.task_done = false;
     if (GetReproduced() < 2) {AddPoints(1.0);}
-    // AddPoints(1.0);
-    // std::cout << "Org at " << cpu.state.cell->GetIndex() << " has points: " <<  cpu.state.points <<std::endl;
-    // std::cout << "Org Process 1" <<std::endl;
     cpu.state.current_location = current_location;
     Cell* cur_cell = cpu.state.cell;
-    // Cell* tar_cell = cur_cell->GetFacingCell();
-    // std::cout << "Org at " << cur_cell->GetIndex() << " pointing at: " <<  tar_cell->GetIndex() <<std::endl;
-    // std::cout << "Org at " << tar_cell->GetIndex() << " pointing at: " <<  tar_cell->GetFacingCell()->GetIndex() <<std::endl;
-    // std::cout << "Org Process 2" <<std::endl;
-    // std::cout << "Organism at " << current_location.GetIndex() << " has " << cpu.state.points << " points." <<std::endl;
-    // std::cout << "Org Process 3" <<std::endl;
     cpu.RunCPUStep(10);
-    // std::cout << "Org Process 4" <<std::endl;
     cpu.state.age++;
     double penalty = std::log10( static_cast<double>(cpu.state.age) + 1.0 ) - 1;
+    // Uncomment for penalty expansion
     // AddPoints( -penalty );
   }
 

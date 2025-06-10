@@ -39,14 +39,6 @@ class OrgWorld : public emp::World<Organism>
   unsigned int max_id;
   unsigned int min_id;
   // direction‐vectors for 8 neighbors:
-  //    0: N   ( 0,-1)
-  //    1: NE  ( 1,-1)
-  //    2: E   ( 1, 0)
-  //    3: SE  ( 1, 1)
-  //    4: S   ( 0, 1)
-  //    5: SW  (-1, 1)
-  //    6: W   (-1, 0)
-  //    7: NW  (-1,-1)
   static constexpr int dx[8] = {0, 1, 1, 1, 0, -1, -1, -1};
   static constexpr int dy[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
@@ -74,7 +66,27 @@ public:
     SetupWorld();
     SetupCellGrid();
     LinkAllNeighbors();
+    SetupSendRecvMonitors();
+    
+  }
 
+  /**
+   * Input: None
+   *
+   * Output: None
+   *
+   * Purpose: Destructor for the world.
+   */
+  ~OrgWorld() {}
+
+  /**
+   * Input: None
+   *
+   * Output: None
+   *
+   * Purpose: Setup data monitor for messages being sent and retrieved
+   */
+  void SetupSendRecvMonitors(){
     const int total_cells = num_w_boxes * num_h_boxes;
     send_counts.assign(total_cells, 0);
     recv_counts.assign(total_cells, 0);
@@ -87,7 +99,6 @@ public:
       recv_monitors[i].New();
     }
 
-    // 1) Collect every ID in a vector (preserves order)
     all_cell_ids.reserve(num_w_boxes * num_h_boxes);
     for (int x = 0; x < num_w_boxes; ++x)
     {
@@ -99,24 +110,10 @@ public:
         id_to_idx[id] = idx;
       }
     }
-    const int total = (int)all_cell_ids.size();
 
-    // 2) Resize & New() your per‐cell monitors
-    send_counts.assign(total, 0);
-    recv_counts.assign(total, 0);
-    send_monitors.resize(total);
-    recv_monitors.resize(total);
-    for (int i = 0; i < total; i++)
-    {
-      send_monitors[i].New();
-      recv_monitors[i].New();
-    }
-
-    // 3) Create the “other” monitors
     send_other_mon.New();
     recv_other_mon.New();
 
-    // 4) Hook Reset → record for per‐cell AND other monitors
     OnUpdate([this](size_t)
              {
     // reset & record per‐cell
@@ -126,6 +123,7 @@ public:
       m.AddDatum( send_counts[i] );
       send_counts[i] = 0;
     }
+
     for (int i = 0; i < (int)recv_monitors.size(); ++i) {
       auto & m = *recv_monitors[i];
       m.Reset();
@@ -133,7 +131,6 @@ public:
       recv_counts[i] = 0;
     }
 
-    // reset & record “other”
     send_other_mon->Reset();
     send_other_mon->AddDatum( send_other_count );
     send_other_count = 0;
@@ -141,16 +138,8 @@ public:
     recv_other_mon->Reset();
     recv_other_mon->AddDatum( recv_other_count );
     recv_other_count = 0; });
-  }
 
-  /**
-   * Input: None
-   *
-   * Output: None
-   *
-   * Purpose: Destructor for the world.
-   */
-  ~OrgWorld() {}
+  }
 
   /**
    * Input: None
@@ -184,7 +173,6 @@ public:
     if (idx < 0 || idx >= total)
       return nullptr;
 
-    // linear index = x*H + y
     const int x = idx / num_h_boxes;
     const int y = idx % num_h_boxes;
     return cell_grid[x][y];
@@ -240,7 +228,7 @@ public:
    *
    * Output: None
    *
-   * Purpose: Increment corresponding count at solve_counts
+   * Purpose: Increment corresponding count at datafiles
    */
   void RecordSolve(size_t task_id)
   {
@@ -249,8 +237,6 @@ public:
       ++solve_counts[task_id];
     }
   }
-
-  // NEW helper methods:
   void RecordSend(int cell_idx)
   {
     if (cell_idx >= 0 && cell_idx < (int)send_counts.size())
@@ -267,7 +253,7 @@ public:
    *
    * Output: A Datafile
    *
-   * Purpose: Setup the Datafile for data tracking
+   * Purpose: Setup the Datafiles for data tracking
    */
   emp::DataFile &SetupSolveFile(const std::string &filename)
   {
@@ -284,7 +270,6 @@ public:
     return file;
   }
 
-  // Finally, in your data‐file setup, you can dump these just like you did for tasks:
   emp::DataFile &SetupSendRecvFile(const std::string &filename)
   {
     auto &file = SetupFile(filename);
@@ -301,7 +286,6 @@ public:
                   "Retrieves from cell " + std::to_string(id));
   }
 
-  // one column for “other”
   file.AddTotal(*send_other_mon, "send_other", "Sends to non‐cell ID");
   file.AddTotal(*recv_other_mon, "recv_other", "Retrieves non‐cell ID");
 
@@ -354,6 +338,13 @@ public:
     }
   }
 
+  /**
+   * Input: None
+   * 
+   * Output: None
+   * 
+   * Purpoose: Set up pointers conncting each cell to its neighbors.
+   */
   void LinkAllNeighbors()
   {
     for (int x = 0; x < num_w_boxes; ++x)
@@ -367,7 +358,6 @@ public:
           int nx = emp::Mod(x + dx[dir], num_w_boxes);
           int ny = emp::Mod(y + dy[dir], num_h_boxes);
           C->SetConnection(dir, cell_grid[nx][ny]);
-          // std::cout << "Connected (" << x << "," << y <<") with dir " << dir << " (" << nx << "," << ny <<")" <<std::endl;
         }
       }
     }
@@ -445,6 +435,13 @@ public:
     reproduce_queue.clear();
   }
 
+  /**
+   * Input: None
+   *
+   * Output: None
+   *
+   * Purpose: Establish link between organisms and cells so their data can be used together
+   */
   void BindAllOrganismsToCell()
   {
     for (int i = 0; i < GetSize(); i++)
@@ -466,17 +463,11 @@ public:
    */
   void Update()
   {
-
     emp::World<Organism>::Update();
-    // std::cout << "Update 0" <<std::endl;
     this->BindAllOrganismsToCell();
-    // std::cout << "Update 1" <<std::endl;
     this->ProcessAllOrganisms();
     // this->MoveAllOrganisms();
-    // std::cout << "Update 2" <<std::endl;
     this->ReproduceAllValidOrganisms();
-    // std::cout << "Update 3" <<std::endl;
-    // this->BindAllOrganismsToCell();
   }
 
   /**
@@ -493,23 +484,9 @@ public:
     for (size_t i = 0; i < tasks.size(); ++i)
     {
       double pts = tasks[i]->CheckOutput(state);
-      // int org_index = state.cell->GetIndex();
-      // Organism* org = pop[org_index];
-      // std::cout << "Org"
-      // << " at index" << org_index
-      // << " checks for: " << tasks[i]->name() << " (+ " << pts << " points)\n";
 
       if (pts != 0.0)
       {
-        // int completed_linear_index = state.cell->GetIndex();
-        // Organism *achiever = pop[completed_linear_index];
-        // std::cout << "Org"
-        //           << " at index" << completed_linear_index
-        //           << " Completed: " << tasks[i]->name() << " (+ " << pts << ")" << std::endl;
-        // if (state.message)
-        // {
-        //   std::cout << state.message << std::endl;
-        // }
         state.points += pts;
         RecordSolve(i);
         state.best_task = std::max(state.best_task, i);
@@ -527,24 +504,23 @@ public:
     reproduce_queue.push_back(location);
   }
 
+  /**
+   * Input: An organism's location and the message they want to send.
+   *
+   * Output: 0 or 1 showing if a send is successful.
+   *
+   * Purpose: Send a message, and custom print statements to write the report when the web version is broken.
+   */
   int SendMessage(int location, unsigned int message)
   {
-    // std::cout << "SendMessage 0" <<std::endl;
     Organism *sender = pop[location];
-    // std::cout << "SendMessage 1" <<std::endl;
-    // std::cout << "sender location: "  << location <<std::endl;
-    // std::cout << "sending to dir: "  << dir <<std::endl;
     Cell *sender_cell = sender->GetCell();
     unsigned int sender_id = sender_cell->GetID();
     int sender_idx = sender_cell->GetIndex();
 
-    // std::cout << "SendMessage 2" <<std::endl;
-    // std::cout << "sender index: "  << sender_cell->GetIndex() <<std::endl;
     Cell *target_cell = sender_cell->GetFacingCell();
     unsigned int target_id = target_cell->GetID();
-    // std::cout << "SendMessage 3" <<std::endl;
     int target_idx = target_cell->GetIndex();
-    // std::cout << "SendMessage 4" <<std::endl;
 
     if (IsOccupied(target_idx) && target_cell->GetFacingCell() == sender_cell && message)
     {
@@ -564,11 +540,17 @@ public:
       std::cout << "Org " << sender_idx << "-" << sender_id << " sent " << message << isID << " to Org " << target_idx << "-" << target_id << std::endl;
       pop[target_idx]->SetInbox(message);
       return 1;
-      // std::cout << sender_cell->GetFacingCell()->GetIndex() << "-" << target_cell->GetFacingCell()->GetIndex() << std::endl;
-      // exit(0);
     }
     return 0;
   }
+
+  /**
+   * Input: An organism's location and the message they will retrieve.
+   *
+   * Output: None
+   *
+   * Purpose: Retrieve a message, and update the organism's knowledge pool of other cell-IDs.
+   */
   void RetrieveMessage(int location, unsigned int msg_id)
   {
     Organism *retriever = pop[location];

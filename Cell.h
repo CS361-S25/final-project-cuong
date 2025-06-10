@@ -30,6 +30,7 @@ public:
         ;
     }
 
+    // Local variables handling
     void SetID(unsigned int new_id) {id = new_id;}
     unsigned int GetID() { return id; }
     int GetIndex() { 
@@ -42,9 +43,6 @@ public:
     void RotateRight() { facing = emp::Mod(facing + 1, 8); }
 
     Cell *GetConnection(int dir) { 
-        // std::cout << "GetConnection 0" <<std::endl;
-        // std::cout << "dir: " << dir <<std::endl;
-        // std::cout << "connections[dir]: " << connections[dir]->GetIndex() <<std::endl;
         return connections[dir]; 
     }
     void SetConnection(int dir, Cell *new_connection) { connections[dir] = new_connection; }

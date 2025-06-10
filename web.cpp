@@ -71,8 +71,6 @@ public:
      */
     void SetupCanvas()
     {
-        // shove canvas into the div
-        // along with a control button
         doc << canvas;
         doc << histCanvas;
         doc << GetToggleButton("Toggle");
@@ -88,7 +86,6 @@ public:
      */
     void SetupConfigPanel()
     {
-        // setup configuration panel
         emp::prefab::ConfigPanel config_panel(worldConfig);
         for (auto &name : {
                  "FILE_NAME",
@@ -107,7 +104,6 @@ public:
         config_panel.SetRange("MIN_BRIGHT", "0.0", "1.0");
         config_panel.SetRange("MAX_BRIGHT", "0.0", "1.0");
         settings << config_panel;
-        // apply configuration query params and config files to config
         auto specs = emp::ArgManager::make_builtin_specs(&worldConfig);
         emp::ArgManager am(emp::web::GetUrlParams(), specs);
         am.UseCallbacks();
@@ -128,96 +124,6 @@ public:
         {
             Organism *new_org = new Organism(&world);
             world.Inject(*new_org);
-        }
-    }
-
-    void DrawMessageHistogram(
-        emp::web::Canvas &C,
-        const emp::DataMonitor<double, emp::data::Histogram> &hist,
-        double y0,
-        const std::string &fill = "steelblue")
-    {
-        // 1) grab the bin‐counts vector
-        const auto &counts = hist.GetHistCounts();
-        const int bins = (int)counts.size();
-        const double bar_w = width / double(bins);
-
-        // 2) find the max so we can scale heights
-        size_t max_count = 0;
-        for (size_t c : counts)
-            max_count = std::max(max_count, c);
-
-        // 3) draw each bar
-        for (int b = 0; b < bins; ++b)
-        {
-            size_t cnt = counts[b];
-            double bar_h = max_count
-                               ? (double(cnt) / double(max_count) * 80.0)
-                               : 0.0;
-            double x = b * bar_w;
-            double y = y0 + (100.0 - bar_h);
-            C.Rect(x, y, bar_w - 1, bar_h, fill, "black");
-        }
-    }
-
-    void DrawMessageTimeSeries(
-        emp::web::Canvas &C,
-        const std::deque<std::vector<size_t>> &history,
-        double y0,
-        const std::string &color)
-    {
-        if (history.empty())
-            return;
-
-        if (history.size() == 1)
-        {
-            const auto &frame = history.front();
-            for (size_t b = 0; b < frame.size(); ++b)
-            {
-                double x = (b + 0.5) * (width / double(frame.size()));
-                double y = y0 + 100.0 / 2; // middle of the 100px canvas
-                C.Circle(x, y, 3, color, "none");
-            }
-            return;
-        }
-
-        const size_t T = history.size();         // number of time‐points
-        const size_t B = history.front().size(); // number of bins
-        if (!T || !B)
-            return;
-
-        // find the absolute maximum in the entire window to scale all lines equally
-        size_t global_max = 1;
-        for (auto &frame : history)
-            for (size_t c : frame)
-                global_max = std::max(global_max, c);
-
-        // horizontal spacing per time‐step
-        double dx = width / double(T - 1);
-
-        // vertical chart height (leave 10px top/bottom margin in 100px total)
-        double chart_h = 80.0;
-        double y_base = y0 + (100.0 - chart_h);
-
-        // for **each** bin, draw its polyline
-        for (size_t b = 0; b < B; ++b)
-        {
-            // choose a distinguishable color per bin (or all same)
-            // here we just slightly vary opacity
-            std::string col = color;
-            // e.g. "rgba(0,128,0,0.3)" for green series, etc.
-
-            // walk through time-points
-            for (size_t t = 0; t + 1 < T; ++t)
-            {
-                double x1 = t * dx;
-                double x2 = (t + 1) * dx;
-                double v1 = double(history[t][b]) / double(global_max);
-                double v2 = double(history[t + 1][b]) / double(global_max);
-                double y1 = y_base + (1.0 - v1) * chart_h;
-                double y2 = y_base + (1.0 - v2) * chart_h;
-                C.Line(x1, y1, x2, y2, col, 1);
-            }
         }
     }
 
@@ -246,16 +152,11 @@ public:
                 continue;
             double p = world.GetOrg(i).GetPoints();
             s.max = std::max(s.max, p);
-            // if (s.max == p)
-            // {
-            //     std::cout << "New max: " << p << " from index " << i << std::endl;
-            // }
             s.min = std::min(s.min, p);
             sum += p;
             sum_sq += p * p;
             ++s.count;
         }
-        // std::cout << "Done one update's ComputeStats() for " << s.count << " orgs " << std::endl;
         if (s.count == 0)
         {
             s.min = 0.0;
@@ -315,6 +216,13 @@ public:
         tasksDoc << "</div>";
     }
 
+    /**
+     * Input: None
+     *
+     * Output: None
+     *
+     * Purpose: Render a list of cell-IDs being sent at any moment
+     */
     void RecordCellPanel()
     {
         cellsDoc.Clear();
@@ -412,13 +320,12 @@ public:
     }
 
     /**
-     * Input: An organism and the current max points in the world
+     * Input: An organism
      *
      * Output: A string describing the color the organism should be
      *
-     * Purpose: Calculate the color of the organism based on its best task done and points.
+     * Purpose: Calculate the color of the organism based on its best task done.
      */
-    // std::string OrgColor(Organism &org, float max_pts)
     std::string OrgColor(Organism &org)
     {
         // basic stats
@@ -432,7 +339,6 @@ public:
         std::string fill;
         if ((cur_message && cur_message == max_known_id) || cur_id == max_known_id)
         {
-            // std::cout << "Special color used" << std::endl;
             fill = emp::ColorHSV(0, 1.0, brightness);
         }
         else
@@ -442,6 +348,13 @@ public:
         return fill;
     }
 
+    /**
+     * Input: None
+     *
+     * Output: None
+     *
+     * Purpose: Load the global varibles keeping track of max and min known IDs, for when the full board is not filled.
+     */
     void GetKnownIDRange()
     {
         int org_num = 0;
@@ -501,7 +414,6 @@ public:
             max_known_id = world.GetMaxID();
             min_known_id = world.GetMinID();
         }
-        // std::cout << "Max Known ID: " << max_known_id << std::endl;
 
         int org_num = 0;
         for (int x = 0; x < num_w_boxes; x++)
@@ -519,26 +431,14 @@ public:
                     Cell *cur_cell = world.GetCellByGridCoord(x, y);
 
                     std::string cell_color = OrgColor(org);
-                    // size_t best = org.GetBestTask();
-                    // if (best != 0) {
-                    //     cell_color = "green";
-                    //     // std::cout << "Printing green arrow" << std::endl;
-                    // }
 
                     std::string isMax = "";
                     if (cur_cell->GetID() == max_known_id)
                     {
                         isMax = " MAX ";
                     }
-                    // std::cout << "ID of " << org_num << " : " << cur_cell->GetID() << isMax << std::endl;
 
                     std::string arrow_color = "black";
-                    // Cell* org_cell = org.GetCell();
-                    // if (org_cell->GetFacingCell()->GetFacingCell() == org_cell){
-                    //     arrow_color = "pink";
-                    // }
-
-                    // const std::string fill = OrgColor(org, st.max);
                     canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE,
                                 cell_color, "black");
 
@@ -552,37 +452,11 @@ public:
                     double ey = cy + dir_dy[dir] * step;
 
                     canvas.Line(cx, cy, ex, ey, arrow_color, 2);
-
-                    // double arrowSize = 0.15 * RECT_SIDE;
-                    // double angle = std::atan2(dir_dy[dir], dir_dx[dir]);
-                    // double wing1 = angle + M_PI / 6.0; // +30° in radians
-                    // double wing2 = angle - M_PI / 6.0; // –30° in radians
-
-                    // double x1 = ex - arrowSize * std::cos(wing1);
-                    // double y1 = ey - arrowSize * std::sin(wing1);
-                    // double x2 = ex - arrowSize * std::cos(wing2);
-                    // double y2 = ey - arrowSize * std::sin(wing2);
-
-                    // canvas.Line(ex, ey, x1, y1, arrow_color, 2);
-                    // canvas.Line(ex, ey, x2, y2, arrow_color, 2);
-
-                    // if (best != 0) {
-                    //     std::cout << "Printed green arrow" << std::endl;
-                    //     exit(0);
-                    // }
                 }
 
                 org_num++;
             }
         }
-        // Clear and redraw the histogram canvas:
-        histCanvas.Clear();
-
-        // top half: sends (green)
-        DrawMessageTimeSeries(histCanvas, send_history, 0, "rgba(0,200,0,0.4)");
-
-        // bottom half: receives (red)
-        DrawMessageTimeSeries(histCanvas, recv_history, 50, "rgba(200,0,0,0.4)");
     
         std::cout << "Cycle: " << cycle << std::endl;
         cycle = cycle + 1;

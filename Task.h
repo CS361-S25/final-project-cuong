@@ -47,10 +47,8 @@ class Initial : public Task {
 class TargetAnother : public Task {
 public:
   double CheckOutput(OrgState &state) override {
-    // std::cout << "CheckOutput FaceAnother 0" <<std::endl;
     Cell* cur_cell = state.cell;
     Cell* tar_cell = cur_cell->GetFacingCell();
-    // std::cout << (tar_cell->GetFacingCell() == cur_cell) <<std::endl;
     if (tar_cell->GetHasOrg()) {
       return 1.0;
     }
@@ -66,10 +64,8 @@ public:
 class FaceAnother : public Task {
 public:
   double CheckOutput(OrgState &state) override {
-    // std::cout << "CheckOutput FaceAnother 0" <<std::endl;
     Cell* cur_cell = state.cell;
     Cell* tar_cell = cur_cell->GetFacingCell();
-    // std::cout << (tar_cell->GetFacingCell() == cur_cell) <<std::endl;
     if (tar_cell->GetHasOrg() && tar_cell->GetFacingCell() == cur_cell ) {
       return 10.0;
     }
@@ -101,13 +97,9 @@ public:
 class PrepHighest : public Task {
 public:
   double CheckOutput(OrgState &state) override {
-    // std::cout << "CheckOutput SendHighest 0" <<std::endl;
-    // std::cout << "Checking output of organism index: " << state.cell->GetIndex() <<std::endl;
-    // std::cout << "CheckOutput SendHighest 1" <<std::endl;
     Cell* cur_cell = state.cell;
     Cell* tar_cell = cur_cell->GetFacingCell();
     unsigned int cell_id  = cur_cell->GetID();
-    // std::cout << "CheckOutput SendHighest 2" <<std::endl;
     unsigned int retrieved = state.retrieved;
 
     unsigned int max_val = std::max(cell_id, retrieved);
@@ -127,13 +119,9 @@ public:
 class SendHighest : public Task {
 public:
   double CheckOutput(OrgState &state) override {
-    // std::cout << "CheckOutput SendHighest 0" <<std::endl;
-    // std::cout << "Checking output of organism index: " << state.cell->GetIndex() <<std::endl;
-    // std::cout << "CheckOutput SendHighest 1" <<std::endl;
     Cell* cur_cell = state.cell;
     Cell* tar_cell = cur_cell->GetFacingCell();
     unsigned int cell_id  = cur_cell->GetID();
-    // std::cout << "CheckOutput SendHighest 2" <<std::endl;
     unsigned int retrieved = state.retrieved;
 
     unsigned int max_val = std::max(cell_id, retrieved);
@@ -152,9 +140,6 @@ public:
 class SendSelf : public Task {
 public:
   double CheckOutput(OrgState &state) override {
-    // std::cout << "CheckOutput SendHighest 0" <<std::endl;
-    // std::cout << "Checking output of organism index: " << state.cell->GetIndex() <<std::endl;
-    // std::cout << "CheckOutput SendHighest 1" <<std::endl;
     Cell* cur_cell = state.cell;
     Cell* tar_cell = cur_cell->GetFacingCell();
     unsigned int cell_id  = cur_cell->GetID();

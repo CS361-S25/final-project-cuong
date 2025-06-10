@@ -17,6 +17,7 @@
  * A custom instruction that outputs the value of a register as the (possible)
  * solution to a task, and then gets a new input value and stores it in the same
  * register.
+ * Redudant with new Cell class usage. Retained in case of needing to use it again.
  */
 // struct IOInstruction
 // {
@@ -67,7 +68,6 @@ struct ReproduceInstruction
   {
     if (state.points > 20)
     {
-      // std::cout << "Org at " << state.cell->GetIndex() << " can reproduce" << std::endl;
       state.world->ReproduceOrg(state.current_location);
       state.points -= 0;
     }
@@ -82,7 +82,6 @@ struct GetFacing {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
-        // std::cout << "Instruction GetFacing 0" <<std::endl;
         core.registers[inst.args[0]] = state.cell->GetFacing();
     }
 
@@ -95,7 +94,6 @@ struct RotateLeft {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
-        // std::cout << "Instruction RotateLeft 0" <<std::endl;
         state.cell->RotateLeft();
     }
 
@@ -108,7 +106,6 @@ struct RotateRight {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
-        // std::cout << "Instruction RotateRight 0" <<std::endl;
         state.cell->RotateRight();
     }
 
@@ -122,8 +119,6 @@ struct GetID {
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
         
-        // std::cout << "Instruction GetID 0" <<std::endl;
-        // std::cout << state.cell->GetID() <<std::endl;
         core.registers[inst.args[0]] = state.cell->GetID();
     }
 
@@ -136,18 +131,10 @@ struct SendMessage {
     static void run(sgpl::Core<Spec> &core, const sgpl::Instruction<Spec> &inst,
                   const sgpl::Program<Spec> &,
                   typename Spec::peripheral_t &state) noexcept {
-        // std::cout << "Instruction SendMessage 0" <<std::endl;
         emp::WorldPosition loc = state.current_location;
-        // std::cout << "Instruction SendMessage 1" <<std::endl;
-        // std::cout << "Instruction SendMessage 2" <<std::endl;
         unsigned int message = core.registers[inst.args[0]];
-        // std::cout << "Instruction SendMessage 3" <<std::endl;
         state.message = message;
-        // std::cout << "Instruction SendMessage 4" <<std::endl;
-        // Cell* cur_cell = state.cell;
-        // Cell* tar_cell = cur_cell->GetFacingCell();
         int sent = state.world->SendMessage(loc.GetIndex(), state.message);
-        // std::cout << "Instruction SendMessage 5" <<std::endl;
         if (sent){state.world->CheckOutput(state);}
         core.registers[inst.args[0]] =  sgpl::tlrand.Get().GetUInt();
     }
