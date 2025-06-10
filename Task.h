@@ -1,7 +1,6 @@
 #ifndef TASK_H
 #define TASK_H
 
-// #include <_types/_uint32_t.h>
 #include <cmath>
 #include <string>
 #include <algorithm>
