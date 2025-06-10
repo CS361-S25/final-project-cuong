@@ -22,7 +22,7 @@ public:
   void SetPoints(double _in) { cpu.state.points = _in; }
   void AddPoints(double _in) { cpu.state.points += _in; }
   double GetPoints() { return cpu.state.points; }
-  // size_t GetAge() { return cpu.state.age; }
+  size_t GetAge() { return cpu.state.age; }
   size_t GetBestTask() { return cpu.state.best_task; }
 
   emp::WorldPosition GetLocation(){return cpu.state.current_location;}
