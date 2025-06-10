@@ -389,16 +389,13 @@ public:
    */
   void ProcessAllOrganisms()
   {
-    // std::cout << "Process 0" <<std::endl;
     emp::vector<size_t> schedule = emp::GetPermutation(GetRandom(), GetSize());
-    // std::cout << "Process 1" <<std::endl;
     for (int i : schedule)
     {
       if (!IsOccupied(i))
       {
         continue;
       }
-      // std::cout << "Process 2" <<std::endl;
       pop[i]->Process(i);
       if (pop[i]->GetPoints() < 0)
       {
@@ -466,7 +463,6 @@ public:
     emp::World<Organism>::Update();
     this->BindAllOrganismsToCell();
     this->ProcessAllOrganisms();
-    // this->MoveAllOrganisms();
     this->ReproduceAllValidOrganisms();
   }
 
@@ -479,7 +475,6 @@ public:
    */
   void CheckOutput(OrgState &state)
   {
-    // TODO: Check if the organism solved a task!
 
     for (size_t i = 0; i < tasks.size(); ++i)
     {
@@ -490,7 +485,6 @@ public:
         state.points += pts;
         RecordSolve(i);
         state.best_task = std::max(state.best_task, i);
-        // exit(0);
       }
     }
   }

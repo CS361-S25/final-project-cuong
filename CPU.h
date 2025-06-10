@@ -76,17 +76,11 @@ public:
    */
   void RunCPUStep(size_t n_cycles)
   {
-    // std::cout << "Run CPU 0" <<std::endl;
     if (!cpu.HasActiveCore())
     {
-      // std::cout << "Run CPU 0.5" <<std::endl;
       cpu.TryLaunchCore();
     }
-
-    // std::cout << "Run CPU 1" <<std::endl;
-    // std::cout << n_cycles <<std::endl;
     sgpl::execute_cpu_n_cycles<Spec>(n_cycles, cpu, program, state);
-    // std::cout << "Run CPU 2" <<std::endl;
   }
 
   /**
@@ -98,7 +92,6 @@ public:
    */
   void Mutate()
   {
-    // TODO: apply mutations!
     InitializeState();
     program.ApplyPointMutations(worldConfig.MUTATION_RATE());
     // Probability each genome bit is flipped
