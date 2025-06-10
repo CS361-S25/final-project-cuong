@@ -116,7 +116,6 @@ public:
 
     OnUpdate([this](size_t)
              {
-    // reset & record per‐cell
     for (int i = 0; i < (int)send_monitors.size(); ++i) {
       auto & m = *send_monitors[i];
       m.Reset();
@@ -194,7 +193,6 @@ public:
    */
   void SetupWorld()
   {
-    // setup the world
     SetPopStruct_Grid(num_w_boxes, num_h_boxes);
     Resize(num_h_boxes, num_w_boxes);
   }
@@ -260,7 +258,6 @@ public:
     auto &file = SetupFile(filename);
     file.AddVar(update, "update", "Update step");
 
-    // one column per task
     for (size_t i = 0; i < tasks.size(); ++i)
     {
       const std::string name = tasks[i]->name();
@@ -275,7 +272,6 @@ public:
     auto &file = SetupFile(filename);
     file.AddVar(update, "update", "Update step");
 
-    // one column per actual cell ID
   for (size_t i = 0; i < all_cell_ids.size(); ++i) {
     const auto id = all_cell_ids[i];
     file.AddTotal(*send_monitors[i],
@@ -313,7 +309,6 @@ public:
         new_cell->SetFacing(random_dir);
         unsigned int random_id = random.GetUInt();
         new_cell->SetID(random_id);
-        // std::cout << "Made cell index " << org_num <<std::endl;
         cell_grid[x][y] = new_cell;
         unsigned int new_id = new_cell->GetID();
         if (max_id)
@@ -332,7 +327,6 @@ public:
         {
           min_id = new_id;
         }
-        // std::cout << cell_grid[x][y]->GetIndex() << std::endl;
         org_num++;
       }
     }
@@ -352,7 +346,6 @@ public:
       for (int y = 0; y < num_h_boxes; ++y)
       {
         Cell *C = cell_grid[x][y];
-        // Fill its 8‐entry connections[] vector:
         for (int dir = 0; dir < 8; ++dir)
         {
           int nx = emp::Mod(x + dx[dir], num_w_boxes);
@@ -424,7 +417,6 @@ public:
           org->CheckReproduction();
       if (offspring.has_value())
       {
-        // std::cout << "Organism at index " << location.GetIndex() << " reproduced!" << std::endl;
         DoBirth(offspring.value(), location.GetIndex());
         org->AddReproduced(1);
       }

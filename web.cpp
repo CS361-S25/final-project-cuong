@@ -20,7 +20,6 @@ emp::web::Document settings("settings");
 emp::web::Document stats("stats");
 emp::web::Document tasksDoc("tasks");
 emp::web::Document cellsDoc("cells");
-// Your configuration object needs to exist outside of the animator class
 MyConfigType worldConfig;
 
 struct Stats
@@ -34,8 +33,6 @@ struct Stats
 
 class AEAnimator : public emp::web::Animate
 {
-
-    // arena width and height
     const int num_h_boxes = worldConfig.WORLD_LEN();
     const int num_w_boxes = worldConfig.WORLD_WIDTH();
     const double RECT_SIDE = worldConfig.CELL_SIZE();
@@ -271,7 +268,6 @@ public:
         const size_t N = world.GetTasks().size();
         const size_t M = N * 2;
         const size_t slot = 2 * task_id + 1;
-        // make color
         /**
          * |        Color | Hue (°) | `emp::ColorHSV(hue,1.0,1.0)`     |
            | -----------: | ------: | -------------------------------- |
@@ -326,11 +322,9 @@ public:
      */
     std::string OrgColor(Organism &org)
     {
-        // basic stats
         Cell *cur_cell = org.GetCell();
         unsigned int cur_id = cur_cell->GetID();
         unsigned int cur_message = org.GetMessage();
-        // double pts = org.GetPoints();
         size_t best = org.GetBestTask();
 
         double brightness = OrgBrightness(cur_id);
