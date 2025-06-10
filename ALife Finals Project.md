@@ -36,7 +36,7 @@ The second experiment was run with the MAX \- KNOWN , SEND \- ID , and the penal
 
 ![][image2]
 
-All in all, the number of messages actually carrying IDs increased by a lot. Still, very few messages contain the largest cell-ID. 
+All in all, the number of messages actually carrying IDs increased by a lot. And the number of organisms sending the highest cell-ID increased to 98.3%. 
 
 ## Description of your reimplementation and any changes 
 
