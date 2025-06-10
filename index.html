@@ -13,10 +13,95 @@
 
   <!-- feature specific scripts -->
   <script src="https://cdn.jsdelivr.net/gh/devosoft/Empirical@26dbbe3/include/emp/prefab/HighlightJS.js" integrity="sha384-Zfh3BfaS9t0VPODZ8NapeEOmrLkeT64Q28jbnxFLJ6ebS23iYWGoydQTNkp1qLUl" crossorigin="anonymous"></script>
+<style>
+    /* your settings panel sizing, etc. */
+    #settings .emp-config-panel {
+      max-width: 400px;
+    }
+
+    #settings input[type="number"] {
+      width: 4em !important;
+      padding-right: 1.5em !important;
+      box-sizing: content-box;
+    }
+
+    #stats {
+      padding: 1em;
+      min-width: 20ch;
+    }
+
+    #stats h4 {
+      margin-top: 0;
+    }
+
+    #stats-content {
+      font-family: monospace;
+    }
+
+    #stats-content div {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .task-entry {
+      display: flex;
+      align-items: center;
+      margin: 2px 0;
+      font-family: sans-serif;
+    }
+
+    .task-swatch {
+      width: 12px;
+      height: 12px;
+      display: inline-block;
+      margin-right: 6px;
+      border: 1px solid #333;
+      background: #000;
+      /* default, will be overriden inline */
+    }
+  </style>
+
 </head>
 
 <body>
-<div id="target"></div>
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Data Column -->
+      <div class="col">
+        <!-- Stats Column -->
+        <div class="col" id="stats">
+          <h4>Point Stats</h4>
+          <div id="stats-content">
+          </div>
+        </div>
+        <div id="tasks"></div>
+        <div id="cells"></div>
+        <!-- Settings Column -->
+        <div class="col" id="settings">
+          <div id="settings-content">
+            <!-- ConfigPanel  -->
+          </div>
+        </div>
+      </div>
+      <!-- Canvas Column -->
+      <div class="col">
+        <h4>Evolving Communication</h4>
+        <div id="target"></div>
+      </div>
+      <div class="col-12">
+        <p>
+          Organisms aimed to evolve the ability to send the highest known Cell ID, represented as the lone red organism, where the highest cell ID found so far is located.
+        </p>
+      </div>
+
+
+
+    </div>
+  </div>
+
+  <!-- Your compiled Empirical code -->
+  <script type="text/javascript" src="de_web.js"></script>
+
 </body>
   
 
