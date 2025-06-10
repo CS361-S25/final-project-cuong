@@ -51,7 +51,6 @@ class AEAnimator : public emp::web::Animate
     OrgWorld world{random};
 
     emp::web::Canvas canvas{width, height, "canvas"};
-    emp::web::Canvas histCanvas{width, 100, "histCanvas"};
 
 public:
     // Constructor
@@ -72,7 +71,6 @@ public:
     void SetupCanvas()
     {
         doc << canvas;
-        doc << histCanvas;
         doc << GetToggleButton("Toggle");
         doc << GetStepButton("Step");
     }
